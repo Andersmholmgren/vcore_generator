@@ -14,7 +14,7 @@ import 'package:built_value/built_value.dart';
     sink..writeln("part '${package.name}.g.dart;'")..writeln();
 
     package.classifiers.forEach((c) {
-      generateClass(c, sink);
+      generateClassifier(c, sink);
       sink.writeln();
     });
   }
@@ -31,6 +31,7 @@ import 'package:built_value/built_value.dart';
 
   void generateValueClass(ValueClass valueClass, IOSink sink) {
     generateClass(valueClass, sink);
+    generateBuilder(valueClass, sink);
   }
 
   void generateClass(ValueClass valueClass, IOSink sink) {
@@ -58,6 +59,31 @@ import 'package:built_value/built_value.dart';
 
     sink.writeln(
         'factory $className([updates(${className}Builder b)]) = _\$$className;');
+    sink.writeln();
+    sink.writeln('}');
+  }
+
+  void generateBuilder(ValueClass valueClass, IOSink sink) {
+    final className = valueClass.name;
+    final builderName = '${className}Builder';
+//    final classNameLower =
+//        className.substring(0, 1).toLowerCase() + className.substring(1);
+    sink.write('abstract class $builderName '
+        'implements Builder<$className, ${className}Builder>');
+    final superNames = valueClass.superTypes.map((c) => c.name);
+    if (superNames.isNotEmpty) {
+      sink..write(', ')..write(superNames.join(', '));
+    }
+    sink.writeln(' {');
+
+    valueClass.properties.forEach((p) {
+      sink.writeln('${p.type.name} ${p.name};');
+    });
+    sink.writeln();
+
+    sink..writeln('$builderName._();')..writeln();
+
+    sink.writeln('factory $builderName() = _\$$builderName;');
     sink.writeln();
     sink.writeln('}');
   }
