@@ -21,12 +21,16 @@ import 'package:built_value/built_value.dart';
 
   void generateClassifier(Classifier classifier, IOSink sink) {
     if (classifier is ValueClass) {
-      generateClass(classifier, sink);
+      generateValueClass(classifier, sink);
     } else if (classifier is ExternalClass) {
 //      generateExternalClass(classifier, sink);
     } else {
       // oops
     }
+  }
+
+  void generateValueClass(ValueClass valueClass, IOSink sink) {
+    generateClass(valueClass, sink);
   }
 
   void generateClass(ValueClass valueClass, IOSink sink) {
@@ -43,6 +47,11 @@ import 'package:built_value/built_value.dart';
 
     sink.writeln('static final Serializer<$className> serializer'
         ' = _\$${classNameLower}Serializer;');
+    sink.writeln();
+
+    valueClass.properties.forEach((p) {
+      sink.writeln('${p.type.name} get ${p.name};');
+    });
     sink.writeln();
 
     sink..writeln('$className._();')..writeln();
