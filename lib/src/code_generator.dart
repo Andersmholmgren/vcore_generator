@@ -62,6 +62,9 @@ import 'package:built_value/built_value.dart';
     }
 
     valueClass.allProperties.forEach((p) {
+      if (p.isNullable) {
+        sink.writeln('@nullable');
+      }
       sink.writeln('${p.type.name} get ${p.name};');
     });
     sink.writeln();
@@ -91,6 +94,9 @@ import 'package:built_value/built_value.dart';
 
     valueClass.allProperties.forEach((p) {
       var propertyClassName = _getMaybeMappedClassName(p.type);
+      if (p.isNullable) {
+        sink.writeln('@nullable');
+      }
       sink.writeln('$propertyClassName ${p.name} = new $propertyClassName();');
     });
     sink.writeln();
