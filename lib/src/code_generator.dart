@@ -31,6 +31,7 @@ import 'package:built_value/built_value.dart';
 
   void generateValueClass(ValueClass valueClass, IOSink sink) {
     generateClass(valueClass, sink);
+    sink.writeln();
     generateBuilder(valueClass, sink);
   }
 
@@ -77,7 +78,8 @@ import 'package:built_value/built_value.dart';
     sink.writeln(' {');
 
     valueClass.properties.forEach((p) {
-      sink.writeln('${_getMaybeMappedClassName(p.type)} ${p.name};');
+      var propertyClassName = _getMaybeMappedClassName(p.type);
+      sink.writeln('$propertyClassName ${p.name} = new $propertyClassName();');
     });
     sink.writeln();
 
