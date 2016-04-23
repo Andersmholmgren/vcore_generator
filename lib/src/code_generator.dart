@@ -61,7 +61,7 @@ import 'package:built_value/built_value.dart';
       sink.writeln();
     }
 
-    valueClass.properties.forEach((p) {
+    valueClass.allProperties.forEach((p) {
       sink.writeln('${p.type.name} get ${p.name};');
     });
     sink.writeln();
@@ -89,7 +89,7 @@ import 'package:built_value/built_value.dart';
     }
     sink.writeln(' {');
 
-    valueClass.properties.forEach((p) {
+    valueClass.allProperties.forEach((p) {
       var propertyClassName = _getMaybeMappedClassName(p.type);
       sink.writeln('$propertyClassName ${p.name} = new $propertyClassName();');
     });
