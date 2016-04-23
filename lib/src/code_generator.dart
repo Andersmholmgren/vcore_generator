@@ -77,7 +77,7 @@ import 'package:built_value/built_value.dart';
     sink.writeln(' {');
 
     valueClass.properties.forEach((p) {
-      sink.writeln('${p.type.name} ${p.name};');
+      sink.writeln('${_getMaybeMappedClassName(p.type)} ${p.name};');
     });
     sink.writeln();
 
@@ -87,4 +87,14 @@ import 'package:built_value/built_value.dart';
     sink.writeln();
     sink.writeln('}');
   }
+}
+
+String _getMaybeMappedClassName(Classifier classifier) {
+  if (classifier is GenericType) {
+    if (classifier.base == builtSet) {
+      return 'SetBuilder<${classifier.genericTypeValues[builtSet.genericTypes.first].name}>';
+    }
+  }
+
+  return classifier.name;
 }
