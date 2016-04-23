@@ -3,17 +3,14 @@
 
 import 'package:vcore_generator/vcore_generator.dart';
 import 'package:test/test.dart';
+import 'package:vcore/vcore.dart';
+import 'dart:io';
 
 void main() {
   group('A group of tests', () {
-    Awesome awesome;
-
-    setUp(() {
-      awesome = new Awesome();
-    });
-
     test('First Test', () {
-      expect(awesome.isAwesome, isTrue);
+      new VCoreCodeGenerator().generatePackage(vcorePackage, stdout);
+//      expect(awesome.isAwesome, isTrue);
     });
   });
 }

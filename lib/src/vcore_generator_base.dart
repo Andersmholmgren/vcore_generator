@@ -3,7 +3,23 @@
 
 // TODO: Put public facing types in this file.
 
-/// Checks if you are awesome. Spoiler: you are.
-class Awesome {
-  bool get isAwesome => true;
+library vcore_generator;
+
+import 'dart:async';
+
+import 'package:analyzer/src/generated/element.dart';
+//import 'package:vcore_generator/src/source_library.dart';
+import 'package:source_gen/source_gen.dart';
+
+/// Generator for VCore.
+///
+class VCoreGenerator extends Generator {
+  Future<String> generate(Element element) async {
+    if (element is! LibraryElement) return null;
+
+//    final sourceLibrary = SourceLibrary.fromLibraryElement(element as LibraryElement);
+//    if (!sourceLibrary.needsVCore && !sourceLibrary.hasSerializers) return null;
+//
+//    return sourceLibrary.generate();
+  }
 }
