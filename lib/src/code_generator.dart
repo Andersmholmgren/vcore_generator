@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:vcore/vcore.dart';
+import 'package:quiver/iterables.dart';
 
 class VCoreCodeGenerator {
   void generatePackage(Package package, IOSink sink) {
@@ -31,36 +32,47 @@ import 'package:built_value/built_value.dart';
 
   void generateValueClass(ValueClass valueClass, IOSink sink) {
     generateClass(valueClass, sink);
-    sink.writeln();
-    generateBuilder(valueClass, sink);
+    if (!valueClass.isAbstract) {
+      sink.writeln();
+      generateBuilder(valueClass, sink);
+    }
   }
 
   void generateClass(ValueClass valueClass, IOSink sink) {
     final className = valueClass.name;
     final classNameLower =
         className.substring(0, 1).toLowerCase() + className.substring(1);
-    sink.write('abstract class $className '
-        'implements Built<$className, ${className}Builder>');
+    sink.write('abstract class $className ');
+    final buildClassName =
+        valueClass.isAbstract ? [] : ['Built<$className, ${className}Builder>'];
+
+//        'implements Built<$className, ${className}Builder>');
     final superNames = valueClass.superTypes.map((c) => c.name);
-    if (superNames.isNotEmpty) {
-      sink..write(', ')..write(superNames.join(', '));
+
+    final allImplementNames = concat([buildClassName, superNames]);
+    if (allImplementNames.isNotEmpty) {
+      sink..write('implements ')..write(allImplementNames.join(', '));
     }
     sink.writeln(' {');
 
-    sink.writeln('static final Serializer<$className> serializer'
-        ' = _\$${classNameLower}Serializer;');
-    sink.writeln();
+    if (!valueClass.isAbstract) {
+      sink.writeln('static final Serializer<$className> serializer'
+          ' = _\$${classNameLower}Serializer;');
+      sink.writeln();
+    }
 
     valueClass.properties.forEach((p) {
       sink.writeln('${p.type.name} get ${p.name};');
     });
     sink.writeln();
 
-    sink..writeln('$className._();')..writeln();
+    if (!valueClass.isAbstract) {
+      sink..writeln('$className._();')..writeln();
 
-    sink.writeln(
-        'factory $className([updates(${className}Builder b)]) = _\$$className;');
-    sink.writeln();
+      sink.writeln(
+          'factory $className([updates(${className}Builder b)]) = _\$$className;');
+      sink.writeln();
+    }
     sink.writeln('}');
   }
 
