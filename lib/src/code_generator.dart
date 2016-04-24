@@ -181,7 +181,7 @@ String _getMaybeMappedClassName(Classifier classifier) {
       return 'MapBuilder<${genericTypeValues[genericTypes.first].name}, '
           '${genericTypeValues[genericTypes.last].name}>';
     }
-  } else if (classifier is ValueClass) {
+  } else if (classifier is ValueClass && !classifier.isAbstract) {
     return '${classifier.name}Builder';
   }
 
