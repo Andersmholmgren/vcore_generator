@@ -95,7 +95,10 @@ import 'package:built_value/built_value.dart';
       }
       sink.write('$propertyClassName ${p.name}');
       // TODO: dodgy way to detect
-      if (propertyClassName.contains('Builder')) {
+      if (p.defaultValue != null) {
+        sink.write(' = ${p.defaultValue}');
+      }
+      else if (propertyClassName.contains('Builder')) {
         sink.write(' = new $propertyClassName()');
       }
       sink.writeln(';');
