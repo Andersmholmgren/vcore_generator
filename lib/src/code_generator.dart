@@ -6,7 +6,7 @@ import 'package:quiver/iterables.dart';
 class VCoreCodeGenerator {
   final bool includeBuildConstructor;
 
-  VCoreCodeGenerator({this.includeBuildConstructor: true});
+  VCoreCodeGenerator({this.includeBuildConstructor: false});
 
   void generatePackage(Package package, IOSink sink) {
     sink..writeln('library ${package.name};')..writeln();
