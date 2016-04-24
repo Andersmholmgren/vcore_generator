@@ -86,10 +86,6 @@ import 'package:built_value/built_value.dart';
 //        className.substring(0, 1).toLowerCase() + className.substring(1);
     sink.write('abstract class $builderName '
         'implements Builder<$className, ${className}Builder>');
-    final superNames = valueClass.superTypes.map((c) => c.name);
-    if (superNames.isNotEmpty) {
-      sink..write(', ')..write(superNames.join(', '));
-    }
     sink.writeln(' {');
 
     valueClass.allProperties.forEach((p) {
