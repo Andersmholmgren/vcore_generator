@@ -93,7 +93,12 @@ import 'package:built_value/built_value.dart';
       if (p.isNullable) {
         sink.writeln('@nullable');
       }
-      sink.writeln('$propertyClassName ${p.name} = new $propertyClassName();');
+      sink.write('$propertyClassName ${p.name}');
+      // TODO: dodgy way to detect
+      if (propertyClassName.contains('Builder')) {
+        sink.write(' = new $propertyClassName()');
+      }
+      sink.writeln(';');
     });
     sink.writeln();
 
