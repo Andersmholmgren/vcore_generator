@@ -4,6 +4,10 @@ import 'package:vcore/vcore.dart';
 import 'package:quiver/iterables.dart';
 
 class VCoreCodeGenerator {
+  final bool includeBuildConstructor;
+
+  VCoreCodeGenerator({this.includeBuildConstructor: true});
+
   void generatePackage(Package package, IOSink sink) {
     sink..writeln('library ${package.name};')..writeln();
     sink..writeln("""
@@ -84,31 +88,38 @@ import 'package:built_value/built_value.dart';
           'factory $className([updates(${className}Builder b)]) = _\$$className;');
       sink.writeln();
 
-      sink.writeln('factory $className.build({');
-
-      final properties = valueClass.allProperties.where((p) => !p.isDerived);
-      final namedParams = properties
-          .map((p) => '${_getMaybeMappedClassName(p.type)} ${p.name}');
-
-      sink.writeln(namedParams.join(', '));
-
-      sink.writeln('}) {');
-
-      sink.writeln('return (new $builderName()');
-
-      properties.forEach((p) {
-        sink.write('..${p.name} = ${p.name}');
-        final defaultValue = _getDefaultValue(p);
-        if (defaultValue != null) {
-          sink.write(' ?? $defaultValue');
-        }
-        sink.writeln();
-      });
-
-      sink..writeln(').build();')..writeln('}');
+      if (includeBuildConstructor) {
+        _generateBuildConstructor(sink, className, valueClass, builderName);
+      }
     }
 
     sink.writeln('}');
+  }
+
+  void _generateBuildConstructor(IOSink sink, String className,
+      ValueClass valueClass, String builderName) {
+    sink.writeln('factory $className.build({');
+
+    final properties = valueClass.allProperties.where((p) => !p.isDerived);
+    final namedParams =
+        properties.map((p) => '${_getMaybeMappedClassName(p.type)} ${p.name}');
+
+    sink.writeln(namedParams.join(', '));
+
+    sink.writeln('}) {');
+
+    sink.writeln('return (new $builderName()');
+
+    properties.forEach((p) {
+      sink.write('..${p.name} = ${p.name}');
+      final defaultValue = _getDefaultValue(p);
+      if (defaultValue != null) {
+        sink.write(' ?? $defaultValue');
+      }
+      sink.writeln();
+    });
+
+    sink..writeln(').build();')..writeln('}');
   }
 
   void generateBuilder(ValueClass valueClass, IOSink sink) {
