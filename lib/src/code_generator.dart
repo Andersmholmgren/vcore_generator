@@ -44,7 +44,8 @@ import 'package:built_value/built_value.dart';
 
   void generateClass(ValueClass valueClass, IOSink sink) {
     if (valueClass.docComment != null) {
-      sink.writeln(valueClass.docComment.split('\n').map((l) => '/// $l').join('\n'));
+      sink.writeln(
+          valueClass.docComment.split('\n').map((l) => '/// $l').join('\n'));
     }
     final className = valueClass.name;
     final classNameLower =
@@ -180,6 +181,8 @@ String _getMaybeMappedClassName(Classifier classifier) {
       return 'MapBuilder<${genericTypeValues[genericTypes.first].name}, '
           '${genericTypeValues[genericTypes.last].name}>';
     }
+  } else if (classifier is ValueClass) {
+    return '${classifier.name}Builder';
   }
 
   return classifier.name;
