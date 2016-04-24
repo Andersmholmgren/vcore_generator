@@ -61,7 +61,10 @@ import 'package:built_value/built_value.dart';
       sink.writeln();
     }
 
-    valueClass.allProperties.forEach((p) {
+    final properties = valueClass.isAbstract
+        ? valueClass.properties
+        : valueClass.allProperties;
+    properties.forEach((p) {
       if (p.isNullable) {
         sink.writeln('@nullable');
       }
@@ -97,8 +100,7 @@ import 'package:built_value/built_value.dart';
       // TODO: dodgy way to detect
       if (p.defaultValue != null) {
         sink.write(' = ${p.defaultValue}');
-      }
-      else if (propertyClassName.contains('Builder')) {
+      } else if (propertyClassName.contains('Builder')) {
         sink.write(' = new $propertyClassName()');
       }
       sink.writeln(';');
