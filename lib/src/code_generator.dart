@@ -97,21 +97,15 @@ import 'package:built_value/built_value.dart';
       sink.writeln('return (new $builderName()');
 
       properties.forEach((p) {
-        sink.writeln('..${p.name} = ${p.name}');
+        sink.write('..${p.name} = ${p.name}');
+        if (p.defaultValue != null) {
+          sink.write(' ?? ${p.defaultValue}');
+        }
+        sink.writeln();
       });
 
       sink..writeln(').build();')..writeln('}');
     }
-    /*
-      factory $className.build(
-      {String name, SetBuilder<TypeParameter> genericTypes}) {
-    return (new ExternalClassBuilder()
-          ..name = name
-          ..genericTypes = genericTypes)
-        .build();
-  }
-
-     */
 
     sink.writeln('}');
   }
@@ -131,9 +125,9 @@ import 'package:built_value/built_value.dart';
         sink.writeln('@nullable');
       }
       sink.write('$propertyClassName ${p.name}');
-      // TODO: dodgy way to detect
       if (p.defaultValue != null) {
         sink.write(' = ${p.defaultValue}');
+        // TODO: dodgy way to detect it is a builder
       } else if (propertyClassName.contains('Builder')) {
         sink.write(' = new $propertyClassName()');
       }
