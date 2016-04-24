@@ -77,12 +77,42 @@ import 'package:built_value/built_value.dart';
     sink.writeln();
 
     if (!valueClass.isAbstract) {
+      final builderName = '${className}Builder';
       sink..writeln('$className._();')..writeln();
 
       sink.writeln(
           'factory $className([updates(${className}Builder b)]) = _\$$className;');
       sink.writeln();
+
+      sink.writeln('factory $className.build({');
+
+      final properties = valueClass.allProperties.where((p) => !p.isDerived);
+      final namedParams = properties
+          .map((p) => '${_getMaybeMappedClassName(p.type)} ${p.name}');
+
+      sink.writeln(namedParams.join(', '));
+
+      sink.writeln('}) {');
+
+      sink.writeln('return (new $builderName()');
+
+      properties.forEach((p) {
+        sink.writeln('..${p.name} = ${p.name}');
+      });
+
+      sink..writeln(').build();')..writeln('}');
     }
+    /*
+      factory $className.build(
+      {String name, SetBuilder<TypeParameter> genericTypes}) {
+    return (new ExternalClassBuilder()
+          ..name = name
+          ..genericTypes = genericTypes)
+        .build();
+  }
+
+     */
+
     sink.writeln('}');
   }
 
