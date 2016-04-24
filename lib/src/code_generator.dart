@@ -111,8 +111,13 @@ import 'package:built_value/built_value.dart';
 
 String _getMaybeMappedClassName(Classifier classifier) {
   if (classifier is GenericType) {
+    final genericTypeValues = classifier.genericTypeValues;
     if (classifier.base == builtSet) {
-      return 'SetBuilder<${classifier.genericTypeValues[builtSet.genericTypes.first].name}>';
+      return 'SetBuilder<${genericTypeValues[builtSet.genericTypes.first].name}>';
+    } else if (classifier.base == builtMap) {
+      final genericTypes = builtMap.genericTypes;
+      return 'MapBuilder<${genericTypeValues[genericTypes.first].name}, '
+          '${genericTypeValues[genericTypes.last].name}>';
     }
   }
 
