@@ -98,8 +98,9 @@ import 'package:built_value/built_value.dart';
 
       properties.forEach((p) {
         sink.write('..${p.name} = ${p.name}');
-        if (p.defaultValue != null) {
-          sink.write(' ?? ${p.defaultValue}');
+        final defaultValue = _getDefaultValue(p);
+        if (defaultValue != null) {
+          sink.write(' ?? $defaultValue');
         }
         sink.writeln();
       });
@@ -120,22 +121,13 @@ import 'package:built_value/built_value.dart';
     sink.writeln(' {');
 
     valueClass.allProperties.where((p) => !p.isDerived).forEach((p) {
-      var propertyClassName = _getMaybeMappedClassName(p.type);
+      final propertyClassName = _getMaybeMappedClassName(p.type);
       if (p.isNullable) {
         sink.writeln('@nullable');
       }
       sink.write('$propertyClassName ${p.name}');
-      Object getDefaultValue(String propertyClassName, Property p) {
-        if (p.defaultValue != null) {
-          return p.defaultValue;
-          // TODO: dodgy way to detect it is a builder
-        } else if (propertyClassName.contains('Builder')) {
-          return 'new $propertyClassName()';
-        } else
-          return null;
-      }
-
-      final defaultValue = getDefaultValue(propertyClassName, p);
+      final defaultValue =
+          _getDefaultValue(p, propertyClassName: propertyClassName);
       if (defaultValue != null) {
         sink.write(' = $defaultValue');
       }
@@ -150,6 +142,18 @@ import 'package:built_value/built_value.dart';
     sink.writeln();
     sink.writeln('}');
   }
+}
+
+Object _getDefaultValue(Property p, {String propertyClassName}) {
+  final _propertyClassName =
+      propertyClassName ?? _getMaybeMappedClassName(p.type);
+  if (p.defaultValue != null) {
+    return p.defaultValue;
+    // TODO: dodgy way to detect it is a builder
+  } else if (_propertyClassName.contains('Builder')) {
+    return 'new $_propertyClassName()';
+  } else
+    return null;
 }
 
 String _getMaybeMappedClassName(Classifier classifier) {
