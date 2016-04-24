@@ -43,6 +43,9 @@ import 'package:built_value/built_value.dart';
   }
 
   void generateClass(ValueClass valueClass, IOSink sink) {
+    if (valueClass.docComment != null) {
+      sink.writeln(valueClass.docComment.split('\n').map((l) => '/// $l').join('\n'));
+    }
     final className = valueClass.name;
     final classNameLower =
         className.substring(0, 1).toLowerCase() + className.substring(1);
