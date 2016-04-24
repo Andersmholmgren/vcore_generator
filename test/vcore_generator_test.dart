@@ -9,7 +9,7 @@ import 'dart:io';
 void main() {
   group('A group of tests', () {
     test('First Test', () {
-      new VCoreCodeGenerator(includeBuildConstructor: false)
+      new VCoreCodeGenerator(includeBuildConstructor: true)
           .generatePackage(vcorePackage, stdout);
 //      expect(awesome.isAwesome, isTrue);
     });
