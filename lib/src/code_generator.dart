@@ -125,12 +125,21 @@ import 'package:built_value/built_value.dart';
         sink.writeln('@nullable');
       }
       sink.write('$propertyClassName ${p.name}');
-      if (p.defaultValue != null) {
-        sink.write(' = ${p.defaultValue}');
-        // TODO: dodgy way to detect it is a builder
-      } else if (propertyClassName.contains('Builder')) {
-        sink.write(' = new $propertyClassName()');
+      Object getDefaultValue(String propertyClassName, Property p) {
+        if (p.defaultValue != null) {
+          return p.defaultValue;
+          // TODO: dodgy way to detect it is a builder
+        } else if (propertyClassName.contains('Builder')) {
+          return 'new $propertyClassName()';
+        } else
+          return null;
       }
+
+      final defaultValue = getDefaultValue(propertyClassName, p);
+      if (defaultValue != null) {
+        sink.write(' = $defaultValue');
+      }
+
       sink.writeln(';');
     });
     sink.writeln();
