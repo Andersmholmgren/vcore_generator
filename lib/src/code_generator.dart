@@ -73,7 +73,7 @@ import 'package:built_value/built_value.dart';
         sink.writeln('@nullable');
       }
       sink.write('${p.type.name} get ${p.name}');
-      if (p.isDerived) {
+      if (p.isDerived && !valueClass.isAbstract) {
         sink.write(' => ${p.derivedExpression}');
       }
       sink.writeln(';');
