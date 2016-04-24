@@ -68,7 +68,11 @@ import 'package:built_value/built_value.dart';
       if (p.isNullable) {
         sink.writeln('@nullable');
       }
-      sink.writeln('${p.type.name} get ${p.name};');
+      sink.write('${p.type.name} get ${p.name}');
+      if (p.isDerived) {
+        sink.write(' => ${p.derivedExpression}');
+      }
+      sink.writeln(';');
     });
     sink.writeln();
 
@@ -91,7 +95,7 @@ import 'package:built_value/built_value.dart';
         'implements Builder<$className, ${className}Builder>');
     sink.writeln(' {');
 
-    valueClass.allProperties.forEach((p) {
+    valueClass.allProperties.where((p) => !p.isDerived).forEach((p) {
       var propertyClassName = _getMaybeMappedClassName(p.type);
       if (p.isNullable) {
         sink.writeln('@nullable');
