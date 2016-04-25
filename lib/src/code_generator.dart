@@ -27,11 +27,17 @@ import 'package:built_value/built_value.dart';
   void generateClassifier(Classifier classifier, IOSink sink) {
     if (classifier is ValueClass) {
       generateValueClass(classifier, sink);
-    } else if (classifier is ExternalClass) {
-//      generateExternalClass(classifier, sink);
+    } else if (classifier is EnumClass) {
+      generateEnumClass(classifier, sink);
     } else {
       // oops
     }
+  }
+
+  void generateEnumClass(EnumClass enumClass, IOSink sink) {
+    sink
+      ..writeln('enum ${enumClass.name} { ${enumClass.literals.join(', ')} }')
+      ..writeln();
   }
 
   void generateValueClass(ValueClass valueClass, IOSink sink) {
