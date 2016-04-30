@@ -72,7 +72,11 @@ class ConvertFromSourceLibrary {
 
   _ResolvingClassifierHelper __resolveHelper(DartType type) {
     print('_resolveHelper($type)');
-    if (type != null) {
+    // TODO: less dodgy way of filtering
+    if (type != null &&
+        !type.isObject &&
+        !type.name.startsWith('Built') &&
+        !type.name.startsWith('Serializer')) {
       final _ResolvingClassifierHelper classifierHelper =
           _classifierHelpers[type];
       if (classifierHelper == null) {
