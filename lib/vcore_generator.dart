@@ -7,5 +7,6 @@
 library vcore_generator;
 
 export 'src/code_generator.dart';
+export 'src/vcore_model_generator.dart';
 
 // TODO: Export any libraries intended for clients of this package.
