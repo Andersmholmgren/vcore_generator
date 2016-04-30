@@ -1,44 +1,102 @@
 import 'package:analyzer/src/generated/element.dart';
 import 'package:built_collection/built_collection.dart';
-import 'package:built_json_generator/src/source_library.dart';
+import 'package:quiver/iterables.dart';
 import 'package:vcore/vcore.dart';
+import 'package:vcore_generator/src/library_elements.dart';
 
 Package convert(LibraryElement library) {
-  return convertFromSourceLibrary(
-      SourceLibrary.fromLibraryElement(library), library.name);
+  return new ConvertFromSourceLibrary(library).convert();
 }
 
 class ConvertFromSourceLibrary {
-  final Map<DartType, ClassifierBuilder> _classifierBuilders =
-      <DartType, ClassifierBuilder>{};
+  Map<DartType, _ResolvingClassifierHelper> _classifierHelpers;
 
   final LibraryElement library;
   final PackageBuilder pb = new PackageBuilder();
 
-  ConvertFromSourceLibrary(this.library, String name) {
-    pb.name = name;
+  ConvertFromSourceLibrary(this.library) {
+    pb.name = library.name;
   }
 
   Package convert() {
-//  new
-//  library.sourceClasses.
+    final classElements = LibraryElements.getClassElements(library);
+
+    final transitiveClassElements =
+        LibraryElements.getTransitiveClassElements(library);
+
+    final allClassElements = concat([classElements, transitiveClassElements]);
+
+    _classifierHelpers =
+        new Map<DartType, _ResolvingClassifierHelper>.fromIterable(
+            allClassElements,
+            key: (ClassElement c) => c.type,
+            value: (c) => _ResolvingClassifierHelper.create(c));
+
+    print("eClassifiers: ${_classifierHelpers.keys.toSet()}");
+
+//    final classifiers =
+//        eClassifiers.map(_processClassifier).where((c) => c != null).toList();
+
+    _classifierHelpers.values.forEach((h) => h.processFlat(_resolveHelper));
+    _classifierHelpers.values.forEach((h) => h.processGraph(_resolveHelper));
+    _classifierHelpers.values.forEach((h) => h.resolve());
+
+    final classifiers =
+        _classifierHelpers.values.map((h) => h.resolvedClassifier);
+
+    final package = new Package((b) => b
+      ..name = 'ecore'
+      ..classifiers.addAll(classifiers));
+
+//    new VCoreCodeGenerator().generatePackage(package, stdout);
+
+//    final boolean = _classifierHelpers['EBoolean'];
+//
+//    print('-------');
+//
+//    print('${classifiers.map((c) => c.name).toSet()}');
+//    print(boolean.resolvedClassifier);
+
+    return package;
   }
 
-  ClassifierBuilder _convertSourceClass(ClassElement sourceClass) {
-    final classifierBuilder = _classifierBuilders[sourceClass];
-    if (classifierBuilder != null) {
-      return classifierBuilder;
+  _ResolvingClassifierHelper _resolveHelper(DartType type) {
+    final result = __resolveHelper(type);
+    print('resolved to: $result');
+    return result;
+  }
+
+  _ResolvingClassifierHelper __resolveHelper(DartType type) {
+    print('_resolveHelper($type)');
+    if (type != null) {
+      final _ResolvingClassifierHelper classifierHelper =
+          _classifierHelpers[type];
+      if (classifierHelper == null) {
+        throw new StateError(
+            "failed to resolve classifier helper class: $type");
+      } else {
+        return classifierHelper;
+      }
+    } else {
+      return null;
     }
-
-    // TODO: assuming value class for now
-
-    final vb = new ValueClassBuilder();
-    vb.name = sourceClass.name;
-
-    _classifierBuilders[sourceClass] = vb;
-
-//    sourceClass.fields
   }
+
+//  ClassifierBuilder _convertSourceClass(ClassElement sourceClass) {
+//    final classifierBuilder = _classifierBuilders[sourceClass];
+//    if (classifierBuilder != null) {
+//      return classifierBuilder;
+//    }
+//
+//    // TODO: assuming value class for now
+//
+//    final vb = new ValueClassBuilder();
+//    vb.name = sourceClass.name;
+//
+//    _classifierBuilders[sourceClass] = vb;
+//
+////    sourceClass.fields
+//  }
 }
 
 abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
@@ -164,22 +222,6 @@ class _ResolvingValueClassHelper
       ..name = structuralElement.name
       ..type = classifierBuilder;
   }
-
-//  PropertyBuilder _processGetter(_ResolvingClassifierHelper lookup(DartType cls),
-//      PropertyAccessorElement structuralElement) {
-//    print('_processField: $structuralElement');
-//    final fieldType = structuralElement.;
-//    final classifierBuilder = lookup(fieldType)?.resolvingClassifier;
-//    if (classifierBuilder == null) {
-//      print("No type for structuralElement $structuralElement");
-//      return null;
-////      throw new StateError("No type for structuralElement $structuralElement");
-//    }
-//
-//    return new PropertyBuilder()
-//      ..name = structuralElement.name
-//      ..type = classifierBuilder;
-//  }
 }
 
 /*
