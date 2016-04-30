@@ -9,6 +9,7 @@ import 'package:vcore_generator/src/dart_source_to_vcore.dart';
 import 'package:vcore_generator/vcore_generator.dart';
 import 'package:vcore/vcore.dart';
 import 'dart:convert';
+import 'package:vcore_generator/src/vcore_model_as_code_serialiser.dart';
 
 /// Generator for VCore Models.
 ///
@@ -28,11 +29,15 @@ class VCoreModelGenerator extends Generator {
     print(package);
     var _json = new JsonEncoder.withIndent(' ');
 
-    print(_json.convert(serializers.serialize(package.classifiers.first)));
+//    print(_json.convert(serializers.serialize(package.classifiers.first)));
+//
+//    print(_json.convert(serializers.serialize(package)));
+//
+//    return "Package _\$vCoreModelPackage = "
+//        "serializers.deserialize(${_json.convert(serializers.serialize(package))});";
 
-    print(_json.convert(serializers.serialize(package)));
-
-    return "Package _\$vCoreModelPackage = "
-        "serializers.deserialize(${_json.convert(serializers.serialize(package))});";
+    final sb = new StringBuffer();
+    new VCoreModelAsCodeSerialiser().serialise(package, sb);
+    return sb.toString();
   }
 }
