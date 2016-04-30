@@ -7,6 +7,7 @@ import 'package:analyzer/src/generated/element.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:vcore_generator/src/dart_source_to_vcore.dart';
 import 'package:vcore_generator/vcore_generator.dart';
+import 'package:vcore/vcore.dart';
 
 /// Generator for VCore Models.
 ///
@@ -21,8 +22,11 @@ class VCoreModelGenerator extends Generator {
 
     final package = convert(element);
 
-    new VCoreCodeGenerator().generatePackage(package, stdout);
+//    new VCoreCodeGenerator().generatePackage(package, stdout);
 
-    return "hi";
+    print(serializers.serialize(package));
+
+    return "Package _\$vCoreModelPackage = "
+        "serializers.deserialize(${serializers.serialize(package)});";
   }
 }
