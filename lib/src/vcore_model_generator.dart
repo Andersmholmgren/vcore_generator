@@ -14,6 +14,11 @@ class VCoreModelGenerator extends Generator {
   Future<String> generate(Element element) async {
     if (element is! LibraryElement) return null;
 
+    // TODO(moi): better way of checking for top level declaration.
+    if (!element.definingCompilationUnit.accessors
+        .any((element) => element.displayName == 'vCoreModelPackage'))
+      return null;
+
     final package = convert(element);
 
     new VCoreCodeGenerator().generatePackage(package, stdout);
