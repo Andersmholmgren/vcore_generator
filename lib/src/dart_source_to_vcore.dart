@@ -24,7 +24,11 @@ class ConvertFromSourceLibrary {
     final transitiveClassElements =
         LibraryElements.getTransitiveClassElements(library);
 
-    final allClassElements = concat([classElements, transitiveClassElements]);
+    final allClassElements = concat([classElements, transitiveClassElements])
+        .where((ClassElement c) {
+//      print(c.name);
+      return !c.name.startsWith(r'_$') && !c.name.contains('Builder');
+    });
 
     _classifierHelpers =
         new Map<DartType, _ResolvingClassifierHelper>.fromIterable(
