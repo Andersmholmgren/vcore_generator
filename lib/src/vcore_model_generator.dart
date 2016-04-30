@@ -8,6 +8,7 @@ import 'package:source_gen/source_gen.dart';
 import 'package:vcore_generator/src/dart_source_to_vcore.dart';
 import 'package:vcore_generator/vcore_generator.dart';
 import 'package:vcore/vcore.dart';
+import 'dart:convert';
 
 /// Generator for VCore Models.
 ///
@@ -24,7 +25,9 @@ class VCoreModelGenerator extends Generator {
 
 //    new VCoreCodeGenerator().generatePackage(package, stdout);
 
-    print(serializers.serialize(package));
+    print(package);
+    print(new JsonEncoder.withIndent(' ')
+        .convert(serializers.serialize(package)));
 
     return "Package _\$vCoreModelPackage = "
         "serializers.deserialize(${serializers.serialize(package)});";
