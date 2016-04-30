@@ -26,8 +26,11 @@ class VCoreModelGenerator extends Generator {
 //    new VCoreCodeGenerator().generatePackage(package, stdout);
 
     print(package);
-    print(new JsonEncoder.withIndent(' ')
-        .convert(serializers.serialize(package)));
+    var _json = new JsonEncoder.withIndent(' ');
+
+    print(_json.convert(serializers.serialize(package.classifiers.first)));
+
+    print(_json.convert(serializers.serialize(package)));
 
     return "Package _\$vCoreModelPackage = "
         "serializers.deserialize(${serializers.serialize(package)});";
