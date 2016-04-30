@@ -1,8 +1,7 @@
 import 'package:analyzer/src/generated/element.dart';
+import 'package:built_collection/built_collection.dart';
 import 'package:built_json_generator/src/source_library.dart';
 import 'package:vcore/vcore.dart';
-import 'package:built_json_generator/src/source_class.dart';
-import 'package:built_collection/built_collection.dart';
 
 Package convert(LibraryElement library) {
   return convertFromSourceLibrary(
@@ -81,8 +80,8 @@ abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
 //    }
   }
 
-  void processFlat(_ResolvingClassifierHelper lookup(String name));
-  void processGraph(_ResolvingClassifierHelper lookup(String name)) {}
+  void processFlat(_ResolvingClassifierHelper lookup(DartType cls));
+  void processGraph(_ResolvingClassifierHelper lookup(DartType cls)) {}
   void resolve() {}
 }
 
@@ -134,18 +133,25 @@ class _ResolvingValueClassHelper
 
   void _processProperties(_ResolvingClassifierHelper lookup(DartType cls)) {
     print('_processProperties($name)');
-    final properties = classifierElement.fields
+    final fieldProperties = classifierElement.fields
         .map((sf) => _processField(lookup, sf))
         .where((pb) => pb != null);
 
-    _properties.addAll(properties);
+    _properties.addAll(fieldProperties);
+
+    final getterProperties = classifierElement.accessors
+        .where((a) => a.isGetter)
+        .map((sf) => _processField(lookup, sf.variable))
+        .where((pb) => pb != null);
+
+    _properties.addAll(getterProperties);
 
 //    resolvingClassifier.addProperty(properties);
   }
 
   PropertyBuilder _processField(_ResolvingClassifierHelper lookup(DartType cls),
-      FieldElement structuralElement) {
-    print('processEStructuralFeature: $structuralElement');
+      VariableElement structuralElement) {
+    print('_processField: $structuralElement');
     final fieldType = structuralElement.type;
     final classifierBuilder = lookup(fieldType)?.resolvingClassifier;
     if (classifierBuilder == null) {
@@ -158,6 +164,22 @@ class _ResolvingValueClassHelper
       ..name = structuralElement.name
       ..type = classifierBuilder;
   }
+
+//  PropertyBuilder _processGetter(_ResolvingClassifierHelper lookup(DartType cls),
+//      PropertyAccessorElement structuralElement) {
+//    print('_processField: $structuralElement');
+//    final fieldType = structuralElement.;
+//    final classifierBuilder = lookup(fieldType)?.resolvingClassifier;
+//    if (classifierBuilder == null) {
+//      print("No type for structuralElement $structuralElement");
+//      return null;
+////      throw new StateError("No type for structuralElement $structuralElement");
+//    }
+//
+//    return new PropertyBuilder()
+//      ..name = structuralElement.name
+//      ..type = classifierBuilder;
+//  }
 }
 
 /*
