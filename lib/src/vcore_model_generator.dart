@@ -33,6 +33,6 @@ class VCoreModelGenerator extends Generator {
     print(_json.convert(serializers.serialize(package)));
 
     return "Package _\$vCoreModelPackage = "
-        "serializers.deserialize(${serializers.serialize(package)});";
+        "serializers.deserialize(${_json.convert(serializers.serialize(package))});";
   }
 }
