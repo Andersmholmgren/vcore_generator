@@ -17,6 +17,7 @@ dependencies:
 #  built_json: '^0.0.5'
   source_gen: '>=0.4.3 <0.5.0'
   quiver: '>=0.21.0 <0.22.0'
+  built_json_generator: '^0.0.5'
 
 dev_dependencies:
 #  built_value: '^0.0.6'

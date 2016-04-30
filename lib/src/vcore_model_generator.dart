@@ -259,3 +259,15 @@ ValueClass _create$className() {
     return result.toString();
   }
 }
+
+
+class BuiltJsonGenerator extends Generator {
+  Future<String> generate(Element element) async {
+    if (element is! LibraryElement) return null;
+
+    final sourceLibrary = SourceLibrary.fromLibraryElement(element as LibraryElement);
+    if (!sourceLibrary.needsBuiltJson && !sourceLibrary.hasSerializers) return null;
+
+    return sourceLibrary.generate();
+  }
+}
