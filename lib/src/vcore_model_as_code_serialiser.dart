@@ -8,7 +8,7 @@ Package get _\$vCoreModelPackage => _${name}Package ??= _create${name}Package();
 Package _${name}Package;
 
 Package _create${name}Package() {
-  final packageBuilder = new PackageBuilder()..name = $name;
+  final packageBuilder = new PackageBuilder()..name = '$name';
   packageBuilder.classifiers
         ''');
 
