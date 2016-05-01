@@ -187,7 +187,7 @@ class _ResolvingValueClassHelper
 
   void _processSuperTypes(_ResolvingClassifierHelper lookup(DartType cls)) {
     print('_processSuperTypes($name)');
-    final superTypes = classifierElement.allSupertypes;
+    final superTypes = classifierElement.interfaces;
 
     superTypes.forEach((t) {
       final superClass = lookup(t as DartType)?.resolvingClassifier;

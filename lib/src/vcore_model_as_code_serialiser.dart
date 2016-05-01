@@ -9,12 +9,34 @@ Package _${name}Package;
 
 Package _create${name}Package() {
   final packageBuilder = new PackageBuilder()..name = '$name';
-  packageBuilder.classifiers
+
+  final Map<String, ClassifierBuilder> _builders = new Map<String, ClassifierBuilder>();
+
+  ClassifierBuilder lookup(String name) => _builders[name];
         ''');
+
+    package.classifiers.forEach((c) {
+      _serialiseClassifierBuilder(c, sink);
+    });
+
+    sink.writeln();
+
+    package.classifiers.forEach((c) {
+      _serialiseClassProperties(c, sink);
+    });
+
+    sink.writeln();
+
+    package.classifiers.forEach((c) {
+      _serialiseClassSuperClasses(c, sink);
+    });
+
+    sink.writeln('packageBuilder.classifiers');
 
     package.classifiers.forEach((c) {
       sink.writeln('..add(${c.name})');
     });
+
     sink.writeln(';');
     sink.writeln('''
     return packageBuilder.build();
@@ -24,76 +46,50 @@ Package _create${name}Package() {
     package.classifiers.forEach((c) => _serialiseClassifier(c, sink));
   }
 
-  void _serialiseClassifier(Classifier c, StringSink sink) {
+  void _serialiseClassifierBuilder(Classifier c, StringSink sink) {
     if (c is ValueClass) {
-      _serialiseClass(c, sink);
+      _serialiseClassBuilder(c, sink);
     } else {
       sink.writeln('// TODO: support ${c.runtimeType}');
     }
   }
 
-  void _serialiseClass(ValueClass vc, StringSink sink) {
+  void _serialiseClassBuilder(ValueClass vc, StringSink sink) {
     final name = vc.name;
     final capName = _capitalise(name);
     sink.writeln('''
-ValueClass _create${capName}() => _${name}Builder.build();
-ValueClassBuilder __${name}Builder;
-ValueClassBuilder get _${name}Builder => __${name}Builder ??= _create${capName}Builder();
-
-ValueClassBuilder _create${capName}Builder() {
-  return new ValueClassBuilder()
+ValueClassBuilder ${name}Builder = new ValueClassBuilder()
     ..name = '_${capName}Builder'
-    ..isAbstract = ${vc.isAbstract}
-    ..superTypes.addAll(${[vc.superTypes.map((t) => t.name).join(', ')]})
+    ..isAbstract = ${vc.isAbstract};
     ''');
 
+    sink.writeln('_builders[$name] = ')
+  }
+
+  void _serialiseClassProperties(ValueClass vc, StringSink sink) {
+    final name = vc.name;
     vc.properties.forEach((Property p) {
-      final pb = p.toBuilder();
       sink.writeln('''
-    ..properties.add(new PropertyBuilder()
-      ..name = '${pb.name}'
-      ..type = ${pb.type.name}
-      ..isNullable = ${pb.isNullable}
-      ..derivedExpression = ${pb.derivedExpression}
-      ..docComment = ${pb.docComment}
-      ..defaultValue = ${pb.defaultValue}
-    )
+    ${name}Builder.properties.add(new PropertyBuilder()
+      ..name = '${p.name}'
+      ..type = lookup('${p.type.name}')
+      ..isNullable = ${p.isNullable}
+      ..derivedExpression = ${p.derivedExpression}
+      ..docComment = ${p.docComment}
+      ..defaultValue = ${p.defaultValue}
+    );
       ''');
     });
-
-    sink.writeln('''
-      );
-}
-''');
   }
-  /*
-ValueClass _create${capName}() => _${name}Builder.build();
-ValueClassBuilder __${name}Builder;
-ValueClassBuilder get _${name}Builder => __${name}Builder ??= _create${capName}Builder();
 
-ValueClassBuilder _create${capName}Builder() {
-  return new ValueClassBuilder()
-    ..name = '_${capName}Builder'
-    ..isAbstract = ${vc.isAbstract}
-    ..superTypes.addAll(${[vc.superTypes.map((t) => t.name).join(', ')]})
-    ..properties.add(new PropertyBuilder()
-      ..name = 'iD'
-      ..type = EBoolean
-      ..isNullable = false
-      ..derivedExpression = null
-      ..docComment = null
-      ..defaultValue = null)
-    ..properties.add(new Property((b) => b
-      ..name = 'eAttributeType'
-      ..type = EDataType
-      ..isNullable = false
-      ..derivedExpression = null
-      ..docComment = null
-      ..defaultValue = null));
-}
-
-
-   */
+  void _serialiseClassSuperClasses(ValueClass vc, StringSink sink) {
+    final name = vc.name;
+    vc.superTypes.forEach((ValueClass sc) {
+      sink.writeln('''
+      ${name}Builder.properties.add(lookup('${sc.name}'));
+      ''');
+    });
+  }
 }
 
 String _capitalise(String s) {
