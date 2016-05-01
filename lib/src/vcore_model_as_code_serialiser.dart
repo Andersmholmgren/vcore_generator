@@ -10,9 +10,9 @@ Package _${name}Package;
 Package _create${name}Package() {
   final packageBuilder = new PackageBuilder()..name = '$name';
 
-  final Map<String, ClassifierBuilder> _builders = new Map<String, ClassifierBuilder>();
+//  final Map<String, ClassifierBuilder> _builders = new Map<String, ClassifierBuilder>();
 
-  ClassifierBuilder lookup(String name) => _builders[name];
+//  ClassifierBuilder lookup(String name) => _builders[name];
         ''');
 
     package.classifiers.forEach((c) {
@@ -34,7 +34,7 @@ Package _create${name}Package() {
     sink.writeln('packageBuilder.classifiers');
 
     package.classifiers.forEach((c) {
-      sink.writeln('..add(${c.name})');
+      sink.writeln('..add(${c.name}Builder.build())');
     });
 
     sink.writeln(';');
@@ -43,7 +43,7 @@ Package _create${name}Package() {
   }
     ''');
 
-    package.classifiers.forEach((c) => _serialiseClassifier(c, sink));
+//    package.classifiers.forEach((c) => _serialiseClassifier(c, sink));
   }
 
   void _serialiseClassifierBuilder(Classifier c, StringSink sink) {
@@ -58,12 +58,10 @@ Package _create${name}Package() {
     final name = vc.name;
     final capName = _capitalise(name);
     sink.writeln('''
-ValueClassBuilder ${name}Builder = new ValueClassBuilder()
-    ..name = '_${capName}Builder'
-    ..isAbstract = ${vc.isAbstract};
+    final ValueClassBuilder ${name}Builder = new ValueClassBuilder()
+      ..name = '_${capName}Builder'
+      ..isAbstract = ${vc.isAbstract};
     ''');
-
-    sink.writeln('_builders[$name] = ')
   }
 
   void _serialiseClassProperties(ValueClass vc, StringSink sink) {
@@ -72,7 +70,7 @@ ValueClassBuilder ${name}Builder = new ValueClassBuilder()
       sink.writeln('''
     ${name}Builder.properties.add(new PropertyBuilder()
       ..name = '${p.name}'
-      ..type = lookup('${p.type.name}')
+      ..type = ${p.type.name}
       ..isNullable = ${p.isNullable}
       ..derivedExpression = ${p.derivedExpression}
       ..docComment = ${p.docComment}
@@ -86,7 +84,7 @@ ValueClassBuilder ${name}Builder = new ValueClassBuilder()
     final name = vc.name;
     vc.superTypes.forEach((ValueClass sc) {
       sink.writeln('''
-      ${name}Builder.properties.add(lookup('${sc.name}'));
+      ${name}Builder.properties.add(${sc.name});
       ''');
     });
   }
