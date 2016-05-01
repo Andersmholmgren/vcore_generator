@@ -36,25 +36,27 @@ Package _create${name}Package() {
     final name = vc.name;
     final capName = _capitalise(name);
     sink.writeln('''
-ValueClass _${name};
-ValueClass get ${name} => _${name} ??= _create${capName}();
+ValueClass _create${capName}() => _${name}Builder.build();
+ValueClassBuilder __${name}Builder;
+ValueClassBuilder get _${name}Builder => __${name}Builder ??= _create${capName}Builder();
 
-ValueClass _create${capName}() {
-  return new ValueClass((cb) => cb
-    ..name = '${capName}'
+ValueClassBuilder _create${capName}Builder() {
+  return new ValueClassBuilder()
+    ..name = '_${capName}Builder'
     ..isAbstract = ${vc.isAbstract}
     ..superTypes.addAll(${[vc.superTypes.map((t) => t.name).join(', ')]})
     ''');
 
-    vc.properties.forEach((p) {
+    vc.properties.forEach((Property p) {
+      final pb = p.toBuilder();
       sink.writeln('''
-    ..properties.add(new Property((b) => b
-      ..name = '${p.name}'
-      ..type = ${p.type.name}
-      ..isNullable = ${p.isNullable}
-      ..derivedExpression = ${p.derivedExpression}
-      ..docComment = ${p.docComment}
-      ..defaultValue = ${p.defaultValue})
+    ..properties.add(new PropertyBuilder()
+      ..name = '${pb.name}'
+      ..type = ${pb.type.name}
+      ..isNullable = ${pb.isNullable}
+      ..derivedExpression = ${pb.derivedExpression}
+      ..docComment = ${pb.docComment}
+      ..defaultValue = ${pb.defaultValue}
     )
       ''');
     });
@@ -64,6 +66,34 @@ ValueClass _create${capName}() {
 }
 ''');
   }
+  /*
+ValueClass _create${capName}() => _${name}Builder.build();
+ValueClassBuilder __${name}Builder;
+ValueClassBuilder get _${name}Builder => __${name}Builder ??= _create${capName}Builder();
+
+ValueClassBuilder _create${capName}Builder() {
+  return new ValueClassBuilder()
+    ..name = '_${capName}Builder'
+    ..isAbstract = ${vc.isAbstract}
+    ..superTypes.addAll(${[vc.superTypes.map((t) => t.name).join(', ')]})
+    ..properties.add(new PropertyBuilder()
+      ..name = 'iD'
+      ..type = EBoolean
+      ..isNullable = false
+      ..derivedExpression = null
+      ..docComment = null
+      ..defaultValue = null)
+    ..properties.add(new Property((b) => b
+      ..name = 'eAttributeType'
+      ..type = EDataType
+      ..isNullable = false
+      ..derivedExpression = null
+      ..docComment = null
+      ..defaultValue = null));
+}
+
+
+   */
 }
 
 String _capitalise(String s) {

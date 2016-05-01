@@ -26,7 +26,9 @@ class VCoreModelGenerator extends Generator {
 
 //    new VCoreCodeGenerator().generatePackage(package, stdout);
 
+//    print('XXXXX');
     print(package);
+//    print('YYYYY');
     var _json = new JsonEncoder.withIndent(' ');
 
 //    print(_json.convert(serializers.serialize(package.classifiers.first)));
@@ -38,6 +40,7 @@ class VCoreModelGenerator extends Generator {
 
     final sb = new StringBuffer();
     new VCoreModelAsCodeSerialiser().serialise(package, sb);
+    print(sb.toString());
     return sb.toString();
   }
 }
