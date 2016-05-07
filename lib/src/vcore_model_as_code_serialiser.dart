@@ -44,7 +44,19 @@ Package _create${capName}Package() {
   }
     ''');
 
-//    package.classifiers.forEach((c) => _serialiseClassifier(c, sink));
+    sink.writeln();
+
+    package.classifiers.forEach((c) {
+      final cType = 'ValueClass'; // TODO: hack - runtimeType is _$ValueClass :-(
+      final cName = c.name;
+      sink.writeln('''
+      $cType _$cName;
+      $cType get $cName => _$cName ??=
+    _\$vCoreModelPackage.classifiers.firstWhere((c) => c.name == '$cName');
+''');
+
+//      ? _serialiseClassifier(c, sink);
+    });
   }
 
   void _serialiseClassifierBuilder(Classifier c, StringSink sink) {
