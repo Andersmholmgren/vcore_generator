@@ -85,7 +85,7 @@ Package _create${capName}Package() {
     final name = _uncapitalise(vc.name);
     vc.superTypes.forEach((ValueClass sc) {
       sink.writeln('''
-      ${name}Builder.properties.add(${_uncapitalise(sc.name)});
+      ${name}Builder.superTypes.add(${_uncapitalise(sc.name)}Builder);
       ''');
     });
   }
