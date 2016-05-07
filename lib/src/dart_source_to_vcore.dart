@@ -66,7 +66,7 @@ class ConvertFromSourceLibrary {
 
   _ResolvingClassifierHelper _resolveHelper(DartType type) {
     final result = __resolveHelper(type);
-    print('resolved to: $result');
+    print('resolved to: $result with builder: ${result?.resolvingClassifier}; ${result?.resolvingClassifier?.name}');
     return result;
   }
 
@@ -176,11 +176,23 @@ class _ResolvingValueClassHelper
 
   void resolve() {
     print('resolve($name)');
-    resolvingClassifier.properties =
-        new SetBuilder<Property>(_properties.build().map((pb) => pb.build()));
+    final p = _properties.build().map((pb) => pb.build());
+    final p2 = p.map((x) => x.toBuilder());
+    resolvingClassifier.properties = new SetBuilder<PropertyBuilder>(p2);
 
-    resolvingClassifier.superTypes = new SetBuilder<ValueClass>(
-        _superClasses.build().map((sc) => sc.build()));
+    final s = _superClasses.build().map((pb) => pb.build());
+    final s2 = s.map((x) => x.toBuilder());
+    resolvingClassifier.superTypes = new SetBuilder<ValueClassBuilder>(s2);
+
+//    resolvingClassifier.properties = _properties;
+//
+//    resolvingClassifier.superTypes = _superClasses;
+
+    print('XXX($name): ${_properties.build().map((vc) => vc.type).toList()}');
+    print('XXX2($name): ${resolvingClassifier.properties.build().map((vc) => vc.type).toList()}');
+
+    print('YYY($name): ${_superClasses.build().map((vc) => vc).toList()}');
+    print('YYY2($name): ${resolvingClassifier.superTypes.build().map((vc) => vc).toList()}');
 
     _resolvedClassifier = resolvingClassifier.build();
   }
