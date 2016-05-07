@@ -2,13 +2,14 @@ import 'package:vcore/vcore.dart';
 
 class VCoreModelAsCodeSerialiser {
   void serialise(Package package, StringSink sink) {
-    final name = package.name;
+    final name = _uncapitalise(package.name);
+    final capName = _capitalise(package.name);
     sink.writeln('''
-Package get _\$vCoreModelPackage => _${name}Package ??= _create${name}Package();
+Package get _\$vCoreModelPackage => _${name}Package ??= _create${capName}Package();
 Package _${name}Package;
 
-Package _create${name}Package() {
-  final packageBuilder = new PackageBuilder()..name = '$name';
+Package _create${capName}Package() {
+  final packageBuilder = new PackageBuilder()..name = '${package.name}';
 
 //  final Map<String, ClassifierBuilder> _builders = new Map<String, ClassifierBuilder>();
 
@@ -34,7 +35,7 @@ Package _create${name}Package() {
     sink.writeln('packageBuilder.classifiers');
 
     package.classifiers.forEach((c) {
-      sink.writeln('..add(${c.name}Builder.build())');
+      sink.writeln('..add(${_uncapitalise(c.name)}Builder.build())');
     });
 
     sink.writeln(';');
@@ -55,22 +56,22 @@ Package _create${name}Package() {
   }
 
   void _serialiseClassBuilder(ValueClass vc, StringSink sink) {
-    final name = vc.name;
-    final capName = _capitalise(name);
+    final name = _uncapitalise(vc.name);
+    final capName = _capitalise(vc.name);
     sink.writeln('''
     final ValueClassBuilder ${name}Builder = new ValueClassBuilder()
-      ..name = '_${capName}Builder'
+      ..name = '${capName}Builder'
       ..isAbstract = ${vc.isAbstract};
     ''');
   }
 
   void _serialiseClassProperties(ValueClass vc, StringSink sink) {
-    final name = vc.name;
+    final name = _uncapitalise(vc.name);
     vc.properties.forEach((Property p) {
       sink.writeln('''
     ${name}Builder.properties.add(new PropertyBuilder()
       ..name = '${p.name}'
-      ..type = ${p.type.name}
+      ..type = ${_uncapitalise(p.type.name)}Builder
       ..isNullable = ${p.isNullable}
       ..derivedExpression = ${p.derivedExpression}
       ..docComment = ${p.docComment}
@@ -81,10 +82,10 @@ Package _create${name}Package() {
   }
 
   void _serialiseClassSuperClasses(ValueClass vc, StringSink sink) {
-    final name = vc.name;
+    final name = _uncapitalise(vc.name);
     vc.superTypes.forEach((ValueClass sc) {
       sink.writeln('''
-      ${name}Builder.properties.add(${sc.name});
+      ${name}Builder.properties.add(${_uncapitalise(sc.name)});
       ''');
     });
   }
@@ -92,4 +93,8 @@ Package _create${name}Package() {
 
 String _capitalise(String s) {
   return s.substring(0, 1).toUpperCase() + s.substring(1);
+}
+
+String _uncapitalise(String s) {
+  return s.substring(0, 1).toLowerCase() + s.substring(1);
 }
