@@ -47,16 +47,38 @@ Package _create${capName}Package() {
     sink.writeln();
 
     package.classifiers.forEach((c) {
-      final cType = 'ValueClass'; // TODO: hack - runtimeType is _$ValueClass :-(
+      final cType =
+          'ValueClass'; // TODO: hack - runtimeType is _$ValueClass :-(
       final cName = c.name;
       sink.writeln('''
       $cType _$cName;
       $cType get $cName => _$cName ??=
     _\$vCoreModelPackage.classifiers.firstWhere((c) => c.name == '$cName');
 ''');
-
-//      ? _serialiseClassifier(c, sink);
     });
+
+    sink.writeln('''
+    Map<Type, Classifier> __typeMap;
+    Map<Type, Classifier> get _typeMap => __typeMap ??= _buildTypeMap();
+
+  Classifier _\$reflectClassifier(Type type) => _typeMap[type];
+  ValueClass _\$reflectVClass(Type type) => _\$reflectClassifier(type);
+
+  Map<Type, Classifier> _buildTypeMap() {
+    final typeMap = <Type, Classifier>{};
+    ''');
+
+    package.classifiers.forEach((c) {
+      final cName = c.name;
+      sink.writeln('''
+        typeMap[source_package.$cName] = $cName;
+''');
+    });
+
+    sink.writeln('''
+    return typeMap;
+  }
+  ''');
   }
 
   void _serialiseClassifierBuilder(Classifier c, StringSink sink) {
