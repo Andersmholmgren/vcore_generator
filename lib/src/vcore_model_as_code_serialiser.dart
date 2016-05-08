@@ -125,10 +125,8 @@ Package _create${capName}Package() {
   }
 }
 
-String _capitalise(String s) {
-  return s.substring(0, 1).toUpperCase() + s.substring(1);
-}
+String _capitalise(String s) =>
+    s.substring(0, 1).toUpperCase() + s.substring(1);
 
-String _uncapitalise(String s) {
-  return s.substring(0, 1).toLowerCase() + s.substring(1);
-}
+String _uncapitalise(String s) =>
+    s.substring(0, 1).toLowerCase() + s.substring(1);
