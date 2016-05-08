@@ -16,6 +16,10 @@ import 'package:built_json/built_json.dart';
 import 'package:built_value/built_value.dart';
     """)..writeln();
 
+    package.imports.forEach((i) {
+      sink.writeln("import '$i';");
+    });
+
     sink..writeln("part '${package.name}.g.dart';")..writeln();
 
     package.classifiers.forEach((c) {
