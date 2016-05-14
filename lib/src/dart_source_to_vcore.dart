@@ -203,12 +203,12 @@ class _ResolvingValueClassHelper
 //    resolvingClassifier.superTypes = _superClasses;
 
     print('XXX($name): ${_properties.build().map((vc) => vc.type).toList()}');
-    print(
-        'XXX2($name): ${resolvingClassifier.properties.build().map((vc) => vc.type).toList()}');
+    print('XXX2($name): ${resolvingClassifier.properties.build()
+          .map((vc) => vc.type).toList()}');
 
     print('YYY($name): ${_superClasses.build().map((vc) => vc).toList()}');
-    print(
-        'YYY2($name): ${resolvingClassifier.superTypes.build().map((vc) => vc).toList()}');
+    print('YYY2($name): ${resolvingClassifier.superTypes.build()
+          .map((vc) => vc).toList()}');
 
     _resolvedClassifier = resolvingClassifier.build();
   }
@@ -228,7 +228,8 @@ class _ResolvingValueClassHelper
   void _processProperties(_ResolvingClassifierHolder lookup(DartType cls)) {
     print('_processProperties($name)');
     final fieldProperties = classifierElement.fields
-        .map((sf) => _processField(lookup, sf))
+        .where((fe) => !fe.isStatic)
+        .map((fe) => _processField(lookup, fe))
         .where((pb) => pb != null);
 
     _properties.addAll(fieldProperties);
