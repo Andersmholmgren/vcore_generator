@@ -19,12 +19,9 @@ class ConvertFromSourceLibrary {
     pb.name = library.name;
 
     final builder = new MapBuilder<String, Classifier>();
-    builder['boolean'] = dartBool;
-    builder['string'] = dartString;
-    builder['integer'] = dartInt;
-    builder['number'] = dartNum;
-    builder['null'] = dartNull;
-    builder['uri'] = dartUri;
+    dartPackage.classifiers.forEach((c) {
+      builder[c.name] = c;
+    });
 
     _coreTypes = builder.build();
   }
@@ -75,14 +72,14 @@ class ConvertFromSourceLibrary {
     return package;
   }
 
-  _ResolvingClassifierHelper _resolveHelper(DartType type) {
+  _ResolvingClassifierHolder _resolveHelper(DartType type) {
     final result = __resolveHelper(type);
     print('resolved to: $result with builder: ${result?.resolvingClassifier}; '
         '${result?.resolvingClassifier?.name}');
     return result;
   }
 
-  _ResolvingClassifierHelper __resolveHelper(DartType type) {
+  _ResolvingClassifierHolder __resolveHelper(DartType type) {
     print('_resolveHelper($type)');
     // TODO: less dodgy way of filtering
     if (type != null &&
@@ -92,8 +89,13 @@ class ConvertFromSourceLibrary {
       final _ResolvingClassifierHelper classifierHelper =
           _classifierHelpers[type];
       if (classifierHelper == null) {
-        throw new StateError(
-            "failed to resolve classifier helper class: $type");
+        final coreType = _coreTypes[type.name];
+        if (coreType != null) {
+          return new _ResolvedClassifier(coreType);
+        } else {
+          throw new StateError(
+              "failed to resolve classifier helper class: $type");
+        }
       } else {
         return classifierHelper;
       }
@@ -119,8 +121,23 @@ class ConvertFromSourceLibrary {
 //  }
 }
 
-abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
+// OMG shit names
+abstract class _ResolvingClassifierHolder<V extends Classifier<V, B>,
     B extends ClassifierBuilder<V, B>> {
+  B get resolvingClassifier;
+}
+
+class _ResolvedClassifier
+    implements _ResolvingClassifierHolder<ExternalClass, ExternalClassBuilder> {
+  final ExternalClassBuilder resolvingClassifier;
+
+  _ResolvedClassifier(ExternalClass cls)
+      : this.resolvingClassifier = cls.toBuilder();
+}
+
+abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
+        B extends ClassifierBuilder<V, B>>
+    implements _ResolvingClassifierHolder<V, B> {
   final ClassElement classifierElement;
 
   V _resolvedClassifier;
@@ -143,8 +160,8 @@ abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
     return new _ResolvingValueClassHelper(classifierElement);
   }
 
-  void processFlat(_ResolvingClassifierHelper lookup(DartType cls));
-  void processGraph(_ResolvingClassifierHelper lookup(DartType cls)) {}
+  void processFlat(_ResolvingClassifierHolder lookup(DartType cls));
+  void processGraph(_ResolvingClassifierHolder lookup(DartType cls)) {}
   void resolve() {}
 }
 
@@ -158,13 +175,13 @@ class _ResolvingValueClassHelper
       : super._(classifierElement, new ValueClassBuilder());
 
   @override
-  void processFlat(_ResolvingClassifierHelper lookup(DartType cls)) {
+  void processFlat(_ResolvingClassifierHolder lookup(DartType cls)) {
     print('processFlat($name)');
 //    resolvingClassifier.isAbstract =
 //        (classifierElement.getAttribute('abstract') ?? 'false') == 'true';
   }
 
-  void processGraph(_ResolvingClassifierHelper lookup(DartType cls)) {
+  void processGraph(_ResolvingClassifierHolder lookup(DartType cls)) {
     print('processGraph($name)');
 
     _processSuperTypes(lookup);
@@ -196,7 +213,7 @@ class _ResolvingValueClassHelper
     _resolvedClassifier = resolvingClassifier.build();
   }
 
-  void _processSuperTypes(_ResolvingClassifierHelper lookup(DartType cls)) {
+  void _processSuperTypes(_ResolvingClassifierHolder lookup(DartType cls)) {
     print('_processSuperTypes($name)');
     final superTypes = classifierElement.interfaces;
 
@@ -208,7 +225,7 @@ class _ResolvingValueClassHelper
     });
   }
 
-  void _processProperties(_ResolvingClassifierHelper lookup(DartType cls)) {
+  void _processProperties(_ResolvingClassifierHolder lookup(DartType cls)) {
     print('_processProperties($name)');
     final fieldProperties = classifierElement.fields
         .map((sf) => _processField(lookup, sf))
@@ -226,7 +243,7 @@ class _ResolvingValueClassHelper
 //    resolvingClassifier.addProperty(properties);
   }
 
-  PropertyBuilder _processField(_ResolvingClassifierHelper lookup(DartType cls),
+  PropertyBuilder _processField(_ResolvingClassifierHolder lookup(DartType cls),
       VariableElement structuralElement) {
     print('_processField: $structuralElement');
     final fieldType = structuralElement.type;
