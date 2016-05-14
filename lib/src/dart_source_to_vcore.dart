@@ -36,7 +36,7 @@ class ConvertFromSourceLibrary {
             key: (ClassElement c) => c.type,
             value: (c) => _ResolvingClassifierHelper.create(c));
 
-    print("eClassifiers: ${_classifierHelpers.keys.toSet()}");
+    print("classifiers: ${_classifierHelpers.keys.toSet()}");
 
 //    final classifiers =
 //        eClassifiers.map(_processClassifier).where((c) => c != null).toList();
