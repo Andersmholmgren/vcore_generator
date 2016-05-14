@@ -10,12 +10,23 @@ Package convert(LibraryElement library) {
 
 class ConvertFromSourceLibrary {
   Map<DartType, _ResolvingClassifierHelper> _classifierHelpers;
+  BuiltMap<String, Classifier> _coreTypes;
 
   final LibraryElement library;
   final PackageBuilder pb = new PackageBuilder();
 
   ConvertFromSourceLibrary(this.library) {
     pb.name = library.name;
+
+    final builder = new MapBuilder<String, Classifier>();
+    builder['boolean'] = dartBool;
+    builder['string'] = dartString;
+    builder['integer'] = dartInt;
+    builder['number'] = dartNum;
+    builder['null'] = dartNull;
+    builder['uri'] = dartUri;
+
+    _coreTypes = builder.build();
   }
 
   Package convert() {
