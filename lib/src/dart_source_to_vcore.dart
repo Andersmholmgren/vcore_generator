@@ -49,7 +49,7 @@ class ConvertFromSourceLibrary {
         _classifierHelpers.values.map((h) => h.resolvedClassifier);
 
     final package = new Package((b) => b
-      ..name = 'ecore'
+      ..name = library.name
       ..classifiers.addAll(classifiers));
 
 //    new VCoreCodeGenerator().generatePackage(package, stdout);
@@ -66,7 +66,8 @@ class ConvertFromSourceLibrary {
 
   _ResolvingClassifierHelper _resolveHelper(DartType type) {
     final result = __resolveHelper(type);
-    print('resolved to: $result with builder: ${result?.resolvingClassifier}; ${result?.resolvingClassifier?.name}');
+    print('resolved to: $result with builder: ${result?.resolvingClassifier}; '
+        '${result?.resolvingClassifier?.name}');
     return result;
   }
 
@@ -129,21 +130,6 @@ abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
 
   static _ResolvingClassifierHelper create(ClassElement classifierElement) {
     return new _ResolvingValueClassHelper(classifierElement);
-//    final xsiType = _getXsiType(classifierElement);
-//    switch (xsiType) {
-//      case 'ecore:EClass':
-//        return new _ResolvingValueClassHelper(classifierElement);
-//
-//      case 'ecore:EENumm':
-//        return new _ResolvingEnumClassHelper(classifierElement);
-//
-//      case 'ecore:EDataType':
-////        return new _ResolvingExternalClassHelper(classifierElement);
-//        return new _ResolvingValueClassHelper(classifierElement);
-//
-//      default:
-//        throw 'oops';
-//    }
   }
 
   void processFlat(_ResolvingClassifierHelper lookup(DartType cls));
@@ -189,10 +175,12 @@ class _ResolvingValueClassHelper
 //    resolvingClassifier.superTypes = _superClasses;
 
     print('XXX($name): ${_properties.build().map((vc) => vc.type).toList()}');
-    print('XXX2($name): ${resolvingClassifier.properties.build().map((vc) => vc.type).toList()}');
+    print(
+        'XXX2($name): ${resolvingClassifier.properties.build().map((vc) => vc.type).toList()}');
 
     print('YYY($name): ${_superClasses.build().map((vc) => vc).toList()}');
-    print('YYY2($name): ${resolvingClassifier.superTypes.build().map((vc) => vc).toList()}');
+    print(
+        'YYY2($name): ${resolvingClassifier.superTypes.build().map((vc) => vc).toList()}');
 
     _resolvedClassifier = resolvingClassifier.build();
   }
