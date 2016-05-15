@@ -93,8 +93,11 @@ class ConvertFromSourceLibrary {
         if (coreType != null) {
           return new _ResolvedClassifier(coreType);
         } else {
-          throw new StateError(
-              "failed to resolve classifier helper class: $type");
+//          throw new StateError(
+//              "failed to resolve classifier helper class: $type");
+          print("failed to resolve classifier helper class: $type");
+          return new _ResolvedClassifier(
+              (new ExternalClassBuilder()..name = type.name).build());
         }
       } else {
         return classifierHelper;
