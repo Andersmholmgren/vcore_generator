@@ -20,14 +20,11 @@ Package _create${capName}Package() {
       _serialiseClassifierBuilder(c, sink);
     });
 
-    sink.writeln('''  // TODO: oops need to fix this in generator
-  final stringBuilder = dartString.toBuilder();
-  final boolBuilder = dartBool.toBuilder();
-  final numBuilder = dartNum.toBuilder();
-  final intBuilder = dartInt.toBuilder();
-  final uriBuilder = dartUri.toBuilder();
-  final regExpBuilder = dartRegExp.toBuilder();
-''');
+    // hmmm rather dodgy knowing dartFoo naming scheme
+    dartPackage.classifiers.forEach((c) {
+      sink.writeln('final ${_uncapitalise(c.name)}Builder = '
+          'dart${_capitalise(c.name)}.toBuilder();');
+    });
 
     sink.writeln();
 
