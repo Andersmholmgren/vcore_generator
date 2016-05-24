@@ -20,6 +20,15 @@ Package _create${capName}Package() {
       _serialiseClassifierBuilder(c, sink);
     });
 
+    sink.writeln('''  // TODO: oops need to fix this in generator
+  final stringBuilder = dartString.toBuilder();
+  final boolBuilder = dartBool.toBuilder();
+  final numBuilder = dartNum.toBuilder();
+  final intBuilder = dartInt.toBuilder();
+  final uriBuilder = dartUri.toBuilder();
+  final regExpBuilder = dartRegExp.toBuilder();
+''');
+
     sink.writeln();
 
     package.classifiers.forEach((c) {
@@ -94,7 +103,7 @@ Package _create${capName}Package() {
     final capName = _capitalise(vc.name);
     sink.writeln('''
     final ValueClassBuilder ${name}Builder = new ValueClassBuilder()
-      ..name = '${capName}Builder'
+      ..name = '${capName}'
       ..isAbstract = ${vc.isAbstract};
     ''');
   }
