@@ -49,8 +49,8 @@ class ConvertFromSourceLibrary {
     _classifierHelpers =
         new Map<String, _ResolvingClassifierHelper>.fromIterable(
             allClassElements,
-            key: (ClassElement c) => c.type.displayName,
-            value: (c) => _ResolvingClassifierHelper.create(c));
+            key: (ClassElement c) => c.type.name,
+            value: (c) => _ResolvingTopLevelClassifierHelper.create(c));
 
     print("classifiers: ${_classifierHelpers.keys.toSet()}");
     _classifierHelpers.forEach((t, h) {
@@ -61,7 +61,10 @@ class ConvertFromSourceLibrary {
 //        eClassifiers.map(_processClassifier).where((c) => c != null).toList();
 
     _classifierHelpers.values.forEach((h) => h.processFlat(_resolveHelper));
-    _classifierHelpers.values.forEach((h) => h.processGraph(_resolveHelper));
+    // TODO: hack .toList() as we are modifying the map!!
+    _classifierHelpers.values
+        .toList()
+        .forEach((h) => h.processGraph(_resolveHelper));
     _classifierHelpers.values.forEach((h) => h.resolve());
 
     final classifiers =
@@ -93,22 +96,69 @@ class ConvertFromSourceLibrary {
   _ResolvingClassifierHolder __resolveHelper(DartType type) {
     print('_resolveHelper($type)');
     // TODO: less dodgy way of filtering
-    if (type != null &&
-        !type.isObject &&
-        !type.name.startsWith('Built') &&
-        !type.name.startsWith('Serializer')) {
+    if (type != null && !type.isObject) {
+      return _resolveHelperByName(type.name, type.displayName);
+    } else {
+      return null;
+    }
+  }
+
+  _ResolvingClassifierHolder _resolveHelperByName(
+      String typeName, String fullTypeName) {
+    print('_resolveHelperByName($fullTypeName)');
+    // TODO: less dodgy way of filtering
+    if (typeName != 'Built' && !typeName.startsWith('Serializer')) {
       final _ResolvingClassifierHelper classifierHelper =
-          _classifierHelpers[type.displayName];
+          _classifierHelpers[fullTypeName] ?? _classifierHelpers[typeName];
       if (classifierHelper == null) {
-        final coreType = _coreTypes[type.name];
+        final coreType = _coreTypes[typeName];
         if (coreType != null) {
-          return new _ResolvedClassifier(coreType);
+          return new _ResolvedExternalClassifier(coreType);
         } else {
+          final bool isSet = typeName == 'BuiltSet';
+          final bool isList = typeName == 'BuiltList';
+          final bool isCollection = isSet || isList;
+          final bool isMap = typeName == 'BuiltMap';
+
+//          final bool isMultivalued = isCollection || isMap;
+          if (isCollection) {
+            print('found new collection type $fullTypeName');
+            final typeParamName = fullTypeName.substring(
+                fullTypeName.indexOf('<') + 1, fullTypeName.lastIndexOf('>'));
+            final typeParamHelper =
+                _resolveHelperByName(typeParamName, typeParamName);
+
+            print('*** $typeParamHelper for $typeParamName');
+            final typeBuilder = isSet
+                ? _createBuiltSet(typeParamHelper.resolvingClassifier)
+                : _createBuiltList(typeParamHelper.resolvingClassifier);
+            final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
+            _classifierHelpers[fullTypeName] = helper;
+            print('added: $fullTypeName -> $helper');
+            return helper;
+          } else if (isMap) {
+            final typeParamNames = fullTypeName
+                .substring(fullTypeName.indexOf('<') + 1,
+                    fullTypeName.lastIndexOf('>'))
+                .split(',')
+                .map((s) => s.trim());
+            final typeParamHelpers = typeParamNames.map((typeParamName) =>
+                _resolveHelperByName(typeParamName, typeParamName));
+            print('*** $typeParamHelpers for $typeParamNames');
+            final typeBuilder = _createBuiltMap(
+                typeParamHelpers.first.resolvingClassifier,
+                typeParamHelpers.elementAt(1).resolvingClassifier);
+            final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
+            _classifierHelpers[fullTypeName] = helper;
+            print('added: $fullTypeName -> $helper');
+            return helper;
+          } else {
 //          throw new StateError(
 //              "failed to resolve classifier helper class: $type");
-          print("failed to resolve classifier helper class: $type");
-          return new _ResolvedClassifier(
-              (new ExternalClassBuilder()..name = type.name).build());
+            print("failed to resolve classifier helper class: $typeName");
+            return new _ResolvedExternalClassifier(
+                (new ExternalClassBuilder()..name = typeName).build());
+          }
         }
       } else {
         return classifierHelper;
@@ -139,21 +189,42 @@ class ConvertFromSourceLibrary {
 abstract class _ResolvingClassifierHolder<V extends Classifier<V, B>,
     B extends ClassifierBuilder<V, B>> {
   B get resolvingClassifier;
+  void resolve();
 }
 
-class _ResolvedClassifier
-    implements _ResolvingClassifierHolder<ExternalClass, ExternalClassBuilder> {
-  final ExternalClassBuilder resolvingClassifier;
+abstract class _ResolvedClassifier<V extends Classifier<V, B>,
+        B extends ClassifierBuilder<V, B>>
+    implements _ResolvingClassifierHolder<V, B> {
+  final B resolvingClassifier;
 
-  _ResolvedClassifier(ExternalClass cls)
-      : this.resolvingClassifier = cls.toBuilder();
+  _ResolvedClassifier(V cls) : this.resolvingClassifier = cls.toBuilder();
+}
+
+class _ResolvedExternalClassifier
+    extends _ResolvedClassifier<ExternalClass, ExternalClassBuilder> {
+  _ResolvedExternalClassifier(ExternalClass cls) : super(cls);
+
+  void resolve() {}
+}
+
+// TODO: this will be problematic as can't be a super type for a valueclass
+// either
+class _ResolvingGenericTypeClassifier
+    extends _ResolvingClassifierHelper<GenericType, GenericTypeBuilder> {
+  _ResolvingGenericTypeClassifier(GenericTypeBuilder resolvingClassifier)
+      : super._(resolvingClassifier);
+
+  void resolve() {}
+
+  @override
+  void processFlat(_ResolvingClassifierHolder lookup(DartType cls)) {
+    // TODO: implement processFlat
+  }
 }
 
 abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
         B extends ClassifierBuilder<V, B>>
     implements _ResolvingClassifierHolder<V, B> {
-  final ClassElement classifierElement;
-
   V _resolvedClassifier;
   V get resolvedClassifier {
     return _resolvedClassifier ??= resolvingClassifier.build();
@@ -165,12 +236,26 @@ abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
 
   String get name => resolvingClassifier.name;
 
-  _ResolvingClassifierHelper._(
-      this.classifierElement, this.resolvingClassifier) {
+  _ResolvingClassifierHelper._(this.resolvingClassifier);
+
+  void processFlat(_ResolvingClassifierHolder lookup(DartType cls));
+  void processGraph(_ResolvingClassifierHolder lookup(DartType cls)) {}
+  void resolve() {}
+}
+
+abstract class _ResolvingTopLevelClassifierHelper<V extends Classifier<V, B>,
+        B extends ClassifierBuilder<V, B>>
+    extends _ResolvingClassifierHelper<V, B> {
+  final ClassElement classifierElement;
+
+  _ResolvingTopLevelClassifierHelper._(
+      this.classifierElement, B resolvingClassifier)
+      : super._(resolvingClassifier) {
     resolvingClassifier.name = classifierElement.name;
   }
 
-  static _ResolvingClassifierHelper create(ClassElement classifierElement) {
+  static _ResolvingTopLevelClassifierHelper create(
+      ClassElement classifierElement) {
     return new _ResolvingValueClassHelper(classifierElement);
   }
 
@@ -180,7 +265,7 @@ abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
 }
 
 class _ResolvingValueClassHelper
-    extends _ResolvingClassifierHelper<ValueClass, ValueClassBuilder> {
+    extends _ResolvingTopLevelClassifierHelper<ValueClass, ValueClassBuilder> {
   SetBuilder<PropertyBuilder> _properties = new SetBuilder<PropertyBuilder>();
   SetBuilder<ValueClassBuilder> _superClasses =
       new SetBuilder<ValueClassBuilder>();
@@ -334,3 +419,28 @@ class _GetClassesVisitor extends RecursiveElementVisitor {
   }
 
  */
+
+GenericTypeBuilder _createBuiltSet(ClassifierBuilder genericParameter) {
+  return new GenericTypeBuilder()
+    ..base = builtSet
+    ..name = 'BuiltSet<${genericParameter.name}>'
+    ..genericTypeValues[builtSet.genericTypes.first] =
+        genericParameter.build(); // DAMN
+}
+
+GenericTypeBuilder _createBuiltList(ClassifierBuilder genericParameter) {
+  return new GenericTypeBuilder()
+    ..base = builtList
+    ..name = 'BuiltList<${genericParameter.name}>'
+    ..genericTypeValues[builtList.genericTypes.first] =
+        genericParameter.build();
+}
+
+GenericTypeBuilder _createBuiltMap(
+    ClassifierBuilder fromParameter, ClassifierBuilder toParameter) {
+  return new GenericTypeBuilder()
+    ..base = builtMap
+    ..name = 'BuiltMap<${fromParameter.name}, ${toParameter.name}>'
+    ..genericTypeValues[builtMap.genericTypes.first] = fromParameter.build()
+    ..genericTypeValues[builtMap.genericTypes.last] = toParameter.build();
+}
