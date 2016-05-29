@@ -27,18 +27,24 @@ class ConvertFromSourceLibrary {
   }
 
   Package convert() {
-    final classElements = LibraryElements.getClassElements(library);
+    final v = new _GetClassesVisitor();
+//    sourceLib.definingCompilationUnit.visitChildren(v);
+    library.visitChildren(v);
+    final classElements = v.classElements;
+//    final classElements = LibraryElements.getClassElements(library);
     print('classElements: $classElements');
 
-    final transitiveClassElements =
-        LibraryElements.getTransitiveClassElements(library);
+//    final transitiveClassElements =
+//        LibraryElements.getTransitiveClassElements(library);
+//
+//    print('transitiveClassElements: $transitiveClassElements');
+//    final allClassElements = concat([classElements, transitiveClassElements])
+//        .where((ClassElement c) {
+////      print(c.name);
+//      return !c.name.startsWith(r'_$') && !c.name.contains('Builder');
+//    });
 
-    print('transitiveClassElements: $transitiveClassElements');
-    final allClassElements = concat([classElements, transitiveClassElements])
-        .where((ClassElement c) {
-//      print(c.name);
-      return !c.name.startsWith(r'_$') && !c.name.contains('Builder');
-    });
+    final allClassElements = classElements;
 
     _classifierHelpers =
         new Map<DartType, _ResolvingClassifierHelper>.fromIterable(
@@ -47,6 +53,9 @@ class ConvertFromSourceLibrary {
             value: (c) => _ResolvingClassifierHelper.create(c));
 
     print("classifiers: ${_classifierHelpers.keys.toSet()}");
+    _classifierHelpers.forEach((t, h) {
+      print('${t.displayName} -> ${h.resolvingClassifier.runtimeType}');
+    });
 
 //    final classifiers =
 //        eClassifiers.map(_processClassifier).where((c) => c != null).toList();
@@ -263,6 +272,30 @@ class _ResolvingValueClassHelper
     return new PropertyBuilder()
       ..name = structuralElement.name
       ..type = classifierBuilder;
+  }
+}
+
+class _GetClassesVisitor extends RecursiveElementVisitor {
+  final List<ClassElement> classElements = new List<ClassElement>();
+
+  @override
+  visitClassElement(ClassElement element) {
+    print('visitClassElement($element)');
+    if (!element.name.startsWith(r'_$') && !element.name.contains('Builder')) {
+      classElements.add(element);
+    }
+    super.visitClassElement(element);
+  }
+
+  visitLibraryElement(LibraryElement element) {
+    print('visitLibraryElement($element)');
+    return super.visitLibraryElement(element);
+  }
+
+  visitExportElement(ExportElement element) {
+    print('visitExportElement($element)');
+    element.exportedLibrary.visitChildren(this);
+    return super.visitExportElement(element);
   }
 }
 

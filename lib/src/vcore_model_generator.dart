@@ -54,10 +54,10 @@ class VCoreModelGenerator extends Generator {
 
     print('sourceLib: ${sourceLib.name}');
     print(sourceLib.definingCompilationUnit.name);
-    final v = new _GetClassesVisitor();
-//    sourceLib.definingCompilationUnit.visitChildren(v);
-    sourceLib.visitChildren(v);
-    print('visited classes: ${v.classElements}');
+//    final v = new _GetClassesVisitor();
+////    sourceLib.definingCompilationUnit.visitChildren(v);
+//    sourceLib.visitChildren(v);
+//    print('visited classes: ${v.classElements}');
 
 //    sourceLib.accept(())
     print('units: ${sourceLib.units}');
@@ -106,9 +106,4 @@ class _GetClassesVisitor extends RecursiveElementVisitor {
     return super.visitExportElement(element);
   }
 
-
-//  @override
-//  visitCompilationUnitElement(CompilationUnitElement element) {
-//    element.visitChildren(this);
-//  }
 }
