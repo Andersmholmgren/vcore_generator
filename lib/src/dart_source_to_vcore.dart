@@ -319,24 +319,34 @@ class _ResolvingValueClassHelper
     superTypes.forEach((t) {
       final superClass = lookup(t as DartType)?.resolvingClassifier;
       if (superClass != null) {
+        if (superClass is! ValueClassBuilder) {
+          throw new StateError('attempt to add superclass $superClass (${superClass.name}) to $name');
+        }
         _superClasses.add(superClass);
       }
     });
   }
 
   void _processProperties(_ResolvingClassifierHolder lookup(DartType cls)) {
-    print('_processProperties($name)');
-    final fieldProperties = classifierElement.fields
-        .where((fe) => !fe.isStatic)
-        .map((fe) => _processField(lookup, fe))
-        .where((pb) => pb != null);
+//    print('_processProperties($name)');
+//    final fields = classifierElement.fields.where((fe) => !fe.isStatic);
+//    print('fields for $name: ${fields.toList()}');
+//
+//    final fieldProperties =
+//        fields.map((fe) => _processField(lookup, fe)).where((pb) => pb != null);
+//
+//    _properties.addAll(fieldProperties);
 
-    _properties.addAll(fieldProperties);
+    final getters = classifierElement.accessors
+        .where((a) => a.isGetter && !a.isStatic);
 
-    final getterProperties = classifierElement.accessors
-        .where((a) => a.isGetter)
+    print('getters for $name: ${getters.toList()}');
+
+    final getterProperties = getters
         .map((sf) => _processField(lookup, sf.variable))
         .where((pb) => pb != null);
+
+    print('getterProperties for $name: ${getterProperties.toList()}');
 
     _properties.addAll(getterProperties);
 
@@ -366,7 +376,7 @@ class _GetClassesVisitor extends RecursiveElementVisitor {
   @override
   visitClassElement(ClassElement element) {
     print('visitClassElement($element)');
-    if (!element.name.startsWith(r'_$') && !element.name.contains('Builder')) {
+    if (!element.name.startsWith(r'_') && !element.name.contains('Builder')) {
       classElements.add(element);
     }
     super.visitClassElement(element);
