@@ -28,10 +28,12 @@ class ConvertFromSourceLibrary {
 
   Package convert() {
     final classElements = LibraryElements.getClassElements(library);
+    print('classElements: $classElements');
 
     final transitiveClassElements =
         LibraryElements.getTransitiveClassElements(library);
 
+    print('transitiveClassElements: $transitiveClassElements');
     final allClassElements = concat([classElements, transitiveClassElements])
         .where((ClassElement c) {
 //      print(c.name);

@@ -17,12 +17,53 @@ class VCoreModelGenerator extends Generator {
   Future<String> generate(Element element) async {
     if (element is! LibraryElement) return null;
 
+    final lelement = element as LibraryElement;
+
+    print('** Library: ${lelement.name}');
+    print('defining compunit: ${lelement.definingCompilationUnit.name}');
+//    print(
+//        'defining compunit imports: ${lelement.definingCompilationUnit.library.imports}');
+    print(
+        'defining compunit prefixes: ${lelement.definingCompilationUnit.library.imports.where((ie) => ie.prefix != null).map((ie) => ie.importedLibrary)}');
+//    print('importedLibraries: ${lelement.importedLibraries.toList()}');
+//    print('imports: ${lelement.imports.toList()}');
+//    print(lelement.unit.element.accessors.map((p) => p.name).toList());
+
+    final sourceLibraries = lelement.definingCompilationUnit.library.imports
+            .where((ie) => ie.prefix?.name?.startsWith('source_package'))
+            .map((ie) => ie.importedLibrary)
+//            .where((pe) => pe.name.startsWith('source_package'))
+//            .map/*<LibraryElement>*/((pe) => pe.enclosingElement)
+        as Iterable<LibraryElement>;
+
+    print('** sourceLibraries: ${sourceLibraries.map((l) => l.name).toList()}');
+
+    if (sourceLibraries.isEmpty) {
+      print('no libraries imported with prefix starting with source_package '
+          'for library ${lelement.name}');
+      return null;
+    }
+
     // TODO(moi): better way of checking for top level declaration.
-    if (!element.definingCompilationUnit.accessors
+    if (!lelement.unit.element.accessors
         .any((element) => element.displayName == 'vCoreModelPackage'))
       return null;
 
-    final package = convert(element);
+    // TODO: only handling first source lib for now
+    final sourceLib = sourceLibraries.first;
+
+    print('sourceLib: ${sourceLib.name}');
+    print(sourceLib.definingCompilationUnit.name);
+    final v = new _GetClassesVisitor();
+//    sourceLib.definingCompilationUnit.visitChildren(v);
+    sourceLib.visitChildren(v);
+    print('visited classes: ${v.classElements}');
+
+//    sourceLib.accept(())
+    print('units: ${sourceLib.units}');
+    print('visibleLibraries: ${sourceLib.visibleLibraries}');
+
+    final package = convert(sourceLib);
 
 //    new VCoreCodeGenerator().generatePackage(package, stdout);
 
@@ -43,4 +84,31 @@ class VCoreModelGenerator extends Generator {
     print(sb.toString());
     return sb.toString();
   }
+}
+class _GetClassesVisitor extends RecursiveElementVisitor {
+  final List<ClassElement> classElements = new List<ClassElement>();
+
+  @override
+  visitClassElement(ClassElement element) {
+    print('visitClassElement($element)');
+    classElements.add(element);
+    super.visitClassElement(element);
+  }
+
+  visitLibraryElement(LibraryElement element) {
+    print('visitLibraryElement($element)');
+    return super.visitLibraryElement(element);
+  }
+
+  visitExportElement(ExportElement element) {
+    print('visitExportElement($element)');
+    element.exportedLibrary.visitChildren(this);
+    return super.visitExportElement(element);
+  }
+
+
+//  @override
+//  visitCompilationUnitElement(CompilationUnitElement element) {
+//    element.visitChildren(this);
+//  }
 }
