@@ -96,6 +96,7 @@ Package _create${capName}Package() {
   }
 
   void _serialiseClassBuilder(ValueClass vc, StringSink sink) {
+    print('_serialiseClassBuilder(${vc.name})');
     final name = _uncapitalise(vc.name);
     final capName = _capitalise(vc.name);
     sink.writeln('''
@@ -106,6 +107,7 @@ Package _create${capName}Package() {
   }
 
   void _serialiseClassProperties(ValueClass vc, StringSink sink) {
+    print('_serialiseClassProperties(${vc.name})');
     final name = _uncapitalise(vc.name);
     vc.properties.forEach((Property p) {
       sink.writeln('''
@@ -122,6 +124,7 @@ Package _create${capName}Package() {
   }
 
   void _serialiseClassSuperClasses(ValueClass vc, StringSink sink) {
+    print('_serialiseClassSuperClasses(${vc.name})');
     final name = _uncapitalise(vc.name);
     vc.superTypes.forEach((ValueClass sc) {
       sink.writeln('''

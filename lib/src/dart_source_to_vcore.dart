@@ -67,8 +67,10 @@ class ConvertFromSourceLibrary {
         .forEach((h) => h.processGraph(_resolveHelper));
     _classifierHelpers.values.forEach((h) => h.resolve());
 
-    final classifiers =
-        _classifierHelpers.values.map((h) => h.resolvedClassifier);
+    final classifiers = _classifierHelpers.values
+        // TODO: better not to have put them there in the first place
+        .where((h) => h.resolvedClassifier is ValueClass)
+        .map((h) => h.resolvedClassifier);
 
     final package = new Package((b) => b
       ..name = library.name
@@ -320,7 +322,8 @@ class _ResolvingValueClassHelper
       final superClass = lookup(t as DartType)?.resolvingClassifier;
       if (superClass != null) {
         if (superClass is! ValueClassBuilder) {
-          throw new StateError('attempt to add superclass $superClass (${superClass.name}) to $name');
+          throw new StateError(
+              'attempt to add superclass $superClass (${superClass.name}) to $name');
         }
         _superClasses.add(superClass);
       }
@@ -337,8 +340,8 @@ class _ResolvingValueClassHelper
 //
 //    _properties.addAll(fieldProperties);
 
-    final getters = classifierElement.accessors
-        .where((a) => a.isGetter && !a.isStatic);
+    final getters =
+        classifierElement.accessors.where((a) => a.isGetter && !a.isStatic);
 
     print('getters for $name: ${getters.toList()}');
 
