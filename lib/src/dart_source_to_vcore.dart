@@ -9,7 +9,7 @@ Package convert(LibraryElement library) {
 }
 
 class ConvertFromSourceLibrary {
-  Map<DartType, _ResolvingClassifierHelper> _classifierHelpers;
+  Map<String, _ResolvingClassifierHelper> _classifierHelpers;
   BuiltMap<String, Classifier> _coreTypes;
 
   final LibraryElement library;
@@ -47,14 +47,14 @@ class ConvertFromSourceLibrary {
     final allClassElements = classElements;
 
     _classifierHelpers =
-        new Map<DartType, _ResolvingClassifierHelper>.fromIterable(
+        new Map<String, _ResolvingClassifierHelper>.fromIterable(
             allClassElements,
-            key: (ClassElement c) => c.type,
+            key: (ClassElement c) => c.type.displayName,
             value: (c) => _ResolvingClassifierHelper.create(c));
 
     print("classifiers: ${_classifierHelpers.keys.toSet()}");
     _classifierHelpers.forEach((t, h) {
-      print('${t.displayName} -> ${h.resolvingClassifier.runtimeType}');
+      print('$t -> ${h.resolvingClassifier.runtimeType}');
     });
 
 //    final classifiers =
@@ -98,7 +98,7 @@ class ConvertFromSourceLibrary {
         !type.name.startsWith('Built') &&
         !type.name.startsWith('Serializer')) {
       final _ResolvingClassifierHelper classifierHelper =
-          _classifierHelpers[type];
+          _classifierHelpers[type.displayName];
       if (classifierHelper == null) {
         final coreType = _coreTypes[type.name];
         if (coreType != null) {
