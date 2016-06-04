@@ -2,7 +2,6 @@ import 'package:analyzer/src/generated/element.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:vcore/vcore.dart';
 
-
 Package convert(LibraryElement library) {
   return new ConvertFromSourceLibrary(library).convert();
 }
@@ -106,7 +105,7 @@ class ConvertFromSourceLibrary {
 
   _ResolvingClassifierHolder _resolveHelperByName(
       String typeName, String fullTypeName) {
-    print('_resolveHelperByName($fullTypeName)');
+    print('_resolveHelperByName($typeName, $fullTypeName)');
     // TODO: less dodgy way of filtering
     if (typeName != 'Built' && !typeName.startsWith('Serializer')) {
       final _ResolvingClassifierHelper classifierHelper =
@@ -124,12 +123,19 @@ class ConvertFromSourceLibrary {
 //          final bool isMultivalued = isCollection || isMap;
           if (isCollection) {
             print('found new collection type $fullTypeName');
-            final typeParamName = fullTypeName.substring(
+            final typeParamFullName = fullTypeName.substring(
                 fullTypeName.indexOf('<') + 1, fullTypeName.lastIndexOf('>'));
-            final typeParamHelper =
-                _resolveHelperByName(typeParamName, typeParamName);
 
-            print('*** $typeParamHelper for $typeParamName');
+            print('typeParamFullName: $typeParamFullName');
+
+            final i = typeParamFullName.indexOf('<');
+            final typeParamName =
+                i < 0 ? typeParamFullName : typeParamFullName.substring(0, i);
+
+            final typeParamHelper =
+                _resolveHelperByName(typeParamName, typeParamFullName);
+
+            print('*** $typeParamHelper for $typeParamFullName');
             final typeBuilder = isSet
                 ? createBuiltSet(typeParamHelper.resolvingClassifier)
                 : createBuiltList(typeParamHelper.resolvingClassifier);
