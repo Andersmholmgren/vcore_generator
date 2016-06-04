@@ -9,11 +9,11 @@ class VCoreModelAsCodeSerialiser {
     final name = _uncapitalise(package.name);
     final capName = _capitalise(package.name);
     sink.writeln('''
-Package get _\$vCoreModelPackage => _${name}Package ??= _create${capName}Package();
-Package _${name}Package;
+${vcorePackagePrefix}Package get _\$vCoreModelPackage => _${name}Package ??= _create${capName}Package();
+${vcorePackagePrefix}Package _${name}Package;
 
-Package _create${capName}Package() {
-  final packageBuilder = new ${vcorePackagePrefix}PackageBuilder()..name = '${package.name}';
+${vcorePackagePrefix}Package _create${capName}Package() {
+  final ${package.name}PackageBuilder = new ${vcorePackagePrefix}PackageBuilder()..name = '${package.name}';
     ''');
 
     package.classifiers.forEach((c) {
@@ -23,7 +23,7 @@ Package _create${capName}Package() {
     // hmmm rather dodgy knowing dartFoo naming scheme
     dartPackage.classifiers.forEach((c) {
       sink.writeln('final ${_uncapitalise(c.name)}Builder = '
-          'dart${_capitalise(c.name)}.toBuilder();');
+          '${vcorePackagePrefix}dart${_capitalise(c.name)}.toBuilder();');
     });
 
     sink.writeln();
@@ -38,7 +38,7 @@ Package _create${capName}Package() {
       _serialiseClassSuperClasses(c, sink);
     });
 
-    sink.writeln('packageBuilder.classifiers');
+    sink.writeln('${package.name}PackageBuilder.classifiers');
 
     package.classifiers.forEach((c) {
       sink.writeln('..add(${_uncapitalise(c.name)}Builder.build())');
@@ -46,7 +46,7 @@ Package _create${capName}Package() {
 
     sink.writeln(';');
     sink.writeln('''
-    return packageBuilder.build();
+    return ${package.name}PackageBuilder.build();
   }
     ''');
 
@@ -132,11 +132,11 @@ Package _create${capName}Package() {
       final typesString =
           type.genericTypeValues.values.map((c) => _builderName(c)).join(', ');
       if (type.base == builtMap) {
-        return 'createBuiltMap($typesString)';
+        return '${vcorePackagePrefix}createBuiltMap($typesString)';
       } else if (type.base == builtSet) {
-        return 'createBuiltSet($typesString)';
+        return '${vcorePackagePrefix}createBuiltSet($typesString)';
       } else if (type.base == builtList) {
-        return 'createBuiltList($typesString)';
+        return '${vcorePackagePrefix}createBuiltList($typesString)';
       }
     }
     return '${_uncapitalise(type.name)}Builder';
