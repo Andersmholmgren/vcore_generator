@@ -112,7 +112,7 @@ Package _create${capName}Package() {
     vc.properties.forEach((Property p) {
       sink.writeln('''
     ${name}Builder.properties.add(new PropertyBuilder()
-      ..name = '${p.name}'
+      ..name = r'${p.name}'
       ..type = ${_builderName(p.type)}
       ..isNullable = ${p.isNullable}
       ..derivedExpression = ${p.derivedExpression}
