@@ -1,6 +1,10 @@
 import 'package:vcore/vcore.dart';
 
 class VCoreModelAsCodeSerialiser {
+  final String vcorePackagePrefix;
+
+  VCoreModelAsCodeSerialiser({this.vcorePackagePrefix: ''});
+
   void serialise(Package package, StringSink sink) {
     final name = _uncapitalise(package.name);
     final capName = _capitalise(package.name);
@@ -9,12 +13,8 @@ Package get _\$vCoreModelPackage => _${name}Package ??= _create${capName}Package
 Package _${name}Package;
 
 Package _create${capName}Package() {
-  final packageBuilder = new PackageBuilder()..name = '${package.name}';
-
-//  final Map<String, ClassifierBuilder> _builders = new Map<String, ClassifierBuilder>();
-
-//  ClassifierBuilder lookup(String name) => _builders[name];
-        ''');
+  final packageBuilder = new ${vcorePackagePrefix}PackageBuilder()..name = '${package.name}';
+    ''');
 
     package.classifiers.forEach((c) {
       _serialiseClassifierBuilder(c, sink);
@@ -100,7 +100,7 @@ Package _create${capName}Package() {
     final name = _uncapitalise(vc.name);
     final capName = _capitalise(vc.name);
     sink.writeln('''
-    final ValueClassBuilder ${name}Builder = new ValueClassBuilder()
+    final ${vcorePackagePrefix}ValueClassBuilder ${name}Builder = new ${vcorePackagePrefix}ValueClassBuilder()
       ..name = '${capName}'
       ..isAbstract = ${vc.isAbstract};
     ''');
@@ -111,7 +111,7 @@ Package _create${capName}Package() {
     final name = _uncapitalise(vc.name);
     vc.properties.forEach((Property p) {
       sink.writeln('''
-    ${name}Builder.properties.add(new PropertyBuilder()
+    ${name}Builder.properties.add(new ${vcorePackagePrefix}PropertyBuilder()
       ..name = r'${p.name}'
       ..type = ${_builderName(p.type)}
       ..isNullable = ${p.isNullable}
