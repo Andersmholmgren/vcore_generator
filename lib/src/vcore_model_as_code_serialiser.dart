@@ -54,30 +54,32 @@ Package _create${capName}Package() {
 
     package.classifiers.forEach((c) {
       final cType =
-          'ValueClass'; // TODO: hack - runtimeType is _$ValueClass :-(
+          '${vcorePackagePrefix}ValueClass'; // TODO: hack - runtimeType is _$ValueClass :-(
       final cName = c.name;
+      final lowerCaseCName = _uncapitalise(cName);
       sink.writeln('''
-      $cType _$cName;
-      $cType get $cName => _$cName ??=
+      $cType _$lowerCaseCName;
+      $cType get $lowerCaseCName => _$lowerCaseCName ??=
     _\$vCoreModelPackage.classifiers.firstWhere((c) => c.name == '$cName');
 ''');
     });
 
     sink.writeln('''
-    Map<Type, Classifier> __typeMap;
-    Map<Type, Classifier> get _typeMap => __typeMap ??= _buildTypeMap();
+    Map<Type, ${vcorePackagePrefix}Classifier> __typeMap;
+    Map<Type, ${vcorePackagePrefix}Classifier> get _typeMap => __typeMap ??= _buildTypeMap();
 
-  Classifier _\$reflectClassifier(Type type) => _typeMap[type];
-  ValueClass _\$reflectVClass(Type type) => _\$reflectClassifier(type);
+  ${vcorePackagePrefix}Classifier _\$reflectClassifier(Type type) => _typeMap[type];
+  ${vcorePackagePrefix}ValueClass _\$reflectVClass(Type type) => _\$reflectClassifier(type);
 
-  Map<Type, Classifier> _buildTypeMap() {
-    final typeMap = <Type, Classifier>{};
+  Map<Type, ${vcorePackagePrefix}Classifier> _buildTypeMap() {
+    final typeMap = <Type, ${vcorePackagePrefix}Classifier>{};
     ''');
 
     package.classifiers.forEach((c) {
       final cName = c.name;
+      final lowerCaseCName = _uncapitalise(cName);
       sink.writeln('''
-        typeMap[source_package.$cName] = $cName;
+        typeMap[source_package.$cName] = $lowerCaseCName;
 ''');
     });
 

@@ -49,7 +49,7 @@ class VCoreModelGenerator extends Generator {
 
     final prefixedVcoreImport = vcoreImports.where((ie) => ie.prefix != null);
     final vcorePrefix = prefixedVcoreImport.isEmpty
-        ? null
+        ? ''
         : '${prefixedVcoreImport.first.prefix.name}.';
 
     print('*** vcorePrefix: $vcorePrefix');
