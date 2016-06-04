@@ -119,46 +119,45 @@ class ConvertFromSourceLibrary {
           final bool isList = typeName == 'BuiltList';
           final bool isCollection = isSet || isList;
           final bool isMap = typeName == 'BuiltMap';
+          final bool isMultiValued = isCollection || isMap;
 
-//          final bool isMultivalued = isCollection || isMap;
-          if (isCollection) {
-            print('found new collection type $fullTypeName');
-            final typeParamFullName = fullTypeName.substring(
-                fullTypeName.indexOf('<') + 1, fullTypeName.lastIndexOf('>'));
-
-            print('typeParamFullName: $typeParamFullName');
-
-            final i = typeParamFullName.indexOf('<');
-            final typeParamName =
-                i < 0 ? typeParamFullName : typeParamFullName.substring(0, i);
-
-            final typeParamHelper =
-                _resolveHelperByName(typeParamName, typeParamFullName);
-
-            print('*** $typeParamHelper for $typeParamFullName');
-            final typeBuilder = isSet
-                ? createBuiltSet(typeParamHelper.resolvingClassifier)
-                : createBuiltList(typeParamHelper.resolvingClassifier);
-            final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
-            _classifierHelpers[fullTypeName] = helper;
-            print('added: $fullTypeName -> $helper');
-            return helper;
-          } else if (isMap) {
+          if (isMultiValued) {
+            print('found new multivalued type $fullTypeName');
             final typeParamNames = fullTypeName
                 .substring(fullTypeName.indexOf('<') + 1,
                     fullTypeName.lastIndexOf('>'))
                 .split(',')
                 .map((s) => s.trim());
-            final typeParamHelpers = typeParamNames.map((typeParamName) =>
-                _resolveHelperByName(typeParamName, typeParamName));
+            final typeParamHelpers = typeParamNames.map((typeParamFullName) {
+              print('typeParamFullName: $typeParamFullName');
+
+              final i = typeParamFullName.indexOf('<');
+              final typeParamName =
+                  i < 0 ? typeParamFullName : typeParamFullName.substring(0, i);
+
+              return _resolveHelperByName(typeParamName, typeParamFullName);
+            });
             print('*** $typeParamHelpers for $typeParamNames');
-            final typeBuilder = createBuiltMap(
-                typeParamHelpers.first.resolvingClassifier,
-                typeParamHelpers.elementAt(1).resolvingClassifier);
-            final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
-            _classifierHelpers[fullTypeName] = helper;
-            print('added: $fullTypeName -> $helper');
-            return helper;
+
+            if (isCollection) {
+              final typeParamHelper = typeParamHelpers.first;
+
+              final typeBuilder = isSet
+                  ? createBuiltSet(typeParamHelper.resolvingClassifier)
+                  : createBuiltList(typeParamHelper.resolvingClassifier);
+              final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
+              _classifierHelpers[fullTypeName] = helper;
+              print('added: $fullTypeName -> $helper');
+              return helper;
+            } else if (isMap) {
+              final typeBuilder = createBuiltMap(
+                  typeParamHelpers.first.resolvingClassifier,
+                  typeParamHelpers.elementAt(1).resolvingClassifier);
+              final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
+              _classifierHelpers[fullTypeName] = helper;
+              print('added: $fullTypeName -> $helper');
+              return helper;
+            }
           } else {
 //          throw new StateError(
 //              "failed to resolve classifier helper class: $type");
