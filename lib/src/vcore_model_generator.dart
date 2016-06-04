@@ -21,8 +21,8 @@ class VCoreModelGenerator extends Generator {
 
     print('** Library: ${lelement.name}');
     print('defining compunit: ${lelement.definingCompilationUnit.name}');
-//    print(
-//        'defining compunit imports: ${lelement.definingCompilationUnit.library.imports}');
+    print(
+        'defining compunit imports: ${lelement.definingCompilationUnit.library.imports}');
     print(
         'defining compunit prefixes: ${lelement.definingCompilationUnit.library.imports.where((ie) => ie.prefix != null).map((ie) => ie.importedLibrary)}');
 //    print('importedLibraries: ${lelement.importedLibraries.toList()}');
@@ -43,6 +43,16 @@ class VCoreModelGenerator extends Generator {
           'for library ${lelement.name}');
       return null;
     }
+
+    final vcoreImports = lelement.definingCompilationUnit.library.imports
+        .where((ie) => ie.importedLibrary.name == 'vcore');
+
+    final prefixedVcoreImport = vcoreImports.where((ie) => ie.prefix != null);
+    final vcorePrefix = prefixedVcoreImport.isEmpty
+        ? null
+        : '${prefixedVcoreImport.first.prefix.name}.';
+
+    print('*** vcorePrefix: $vcorePrefix');
 
     // TODO(moi): better way of checking for top level declaration.
     if (!lelement.unit.element.accessors
@@ -80,11 +90,13 @@ class VCoreModelGenerator extends Generator {
 //        "serializers.deserialize(${_json.convert(serializers.serialize(package))});";
 
     final sb = new StringBuffer();
-    new VCoreModelAsCodeSerialiser().serialise(package, sb);
+    new VCoreModelAsCodeSerialiser(vcorePackagePrefix: vcorePrefix)
+        .serialise(package, sb);
     print(sb.toString());
     return sb.toString();
   }
 }
+
 class _GetClassesVisitor extends RecursiveElementVisitor {
   final List<ClassElement> classElements = new List<ClassElement>();
 
@@ -105,5 +117,4 @@ class _GetClassesVisitor extends RecursiveElementVisitor {
     element.exportedLibrary.visitChildren(this);
     return super.visitExportElement(element);
   }
-
 }
