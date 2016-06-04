@@ -1,8 +1,7 @@
 import 'package:analyzer/src/generated/element.dart';
 import 'package:built_collection/built_collection.dart';
-import 'package:quiver/iterables.dart';
 import 'package:vcore/vcore.dart';
-import 'package:vcore_generator/src/library_elements.dart';
+
 
 Package convert(LibraryElement library) {
   return new ConvertFromSourceLibrary(library).convert();
@@ -132,8 +131,8 @@ class ConvertFromSourceLibrary {
 
             print('*** $typeParamHelper for $typeParamName');
             final typeBuilder = isSet
-                ? _createBuiltSet(typeParamHelper.resolvingClassifier)
-                : _createBuiltList(typeParamHelper.resolvingClassifier);
+                ? createBuiltSet(typeParamHelper.resolvingClassifier)
+                : createBuiltList(typeParamHelper.resolvingClassifier);
             final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
             _classifierHelpers[fullTypeName] = helper;
             print('added: $fullTypeName -> $helper');
@@ -147,7 +146,7 @@ class ConvertFromSourceLibrary {
             final typeParamHelpers = typeParamNames.map((typeParamName) =>
                 _resolveHelperByName(typeParamName, typeParamName));
             print('*** $typeParamHelpers for $typeParamNames');
-            final typeBuilder = _createBuiltMap(
+            final typeBuilder = createBuiltMap(
                 typeParamHelpers.first.resolvingClassifier,
                 typeParamHelpers.elementAt(1).resolvingClassifier);
             final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
@@ -432,28 +431,3 @@ class _GetClassesVisitor extends RecursiveElementVisitor {
   }
 
  */
-
-GenericTypeBuilder _createBuiltSet(ClassifierBuilder genericParameter) {
-  return new GenericTypeBuilder()
-    ..base = builtSet
-    ..name = 'BuiltSet<${genericParameter.name}>'
-    ..genericTypeValues[builtSet.genericTypes.first] =
-        genericParameter.build(); // DAMN
-}
-
-GenericTypeBuilder _createBuiltList(ClassifierBuilder genericParameter) {
-  return new GenericTypeBuilder()
-    ..base = builtList
-    ..name = 'BuiltList<${genericParameter.name}>'
-    ..genericTypeValues[builtList.genericTypes.first] =
-        genericParameter.build();
-}
-
-GenericTypeBuilder _createBuiltMap(
-    ClassifierBuilder fromParameter, ClassifierBuilder toParameter) {
-  return new GenericTypeBuilder()
-    ..base = builtMap
-    ..name = 'BuiltMap<${fromParameter.name}, ${toParameter.name}>'
-    ..genericTypeValues[builtMap.genericTypes.first] = fromParameter.build()
-    ..genericTypeValues[builtMap.genericTypes.last] = toParameter.build();
-}

@@ -113,7 +113,7 @@ Package _create${capName}Package() {
       sink.writeln('''
     ${name}Builder.properties.add(new PropertyBuilder()
       ..name = '${p.name}'
-      ..type = ${_uncapitalise(p.type.name)}Builder
+      ..type = ${_builderName(p.type)}
       ..isNullable = ${p.isNullable}
       ..derivedExpression = ${p.derivedExpression}
       ..docComment = ${p.docComment}
@@ -121,6 +121,23 @@ Package _create${capName}Package() {
     );
       ''');
     });
+  }
+
+  String _builderName(Classifier type) {
+    print('_builderName(${type.runtimeType} ${type.name})');
+
+    if (type is GenericType) {
+      final typesString =
+          type.genericTypeValues.values.map((c) => _builderName(c)).join(', ');
+      if (type.base == builtMap) {
+        return 'createBuiltMap($typesString)';
+      } else if (type.base == builtSet) {
+        return 'createBuiltSet($typesString)';
+      } else if (type.base == builtList) {
+        return 'createBuiltList($typesString)';
+      }
+    }
+    return '${_uncapitalise(type.name)}Builder';
   }
 
   void _serialiseClassSuperClasses(ValueClass vc, StringSink sink) {
