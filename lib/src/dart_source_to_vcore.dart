@@ -282,8 +282,7 @@ class _ResolvingValueClassHelper
   @override
   void processFlat(_ResolvingClassifierHolder lookup(DartType cls)) {
     print('processFlat($name)');
-//    resolvingClassifier.isAbstract =
-//        (classifierElement.getAttribute('abstract') ?? 'false') == 'true';
+    resolvingClassifier.isAbstract = classifierElement.isAbstract;
   }
 
   void processGraph(_ResolvingClassifierHolder lookup(DartType cls)) {
