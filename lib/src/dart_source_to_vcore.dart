@@ -281,8 +281,12 @@ class _ResolvingValueClassHelper
 
   @override
   void processFlat(_ResolvingClassifierHolder lookup(DartType cls)) {
-    print('processFlat($name)');
-    resolvingClassifier.isAbstract = classifierElement.isAbstract;
+    print('_ResolvingValueClassHelper.processFlat($name)');
+    resolvingClassifier.isAbstract =
+        !classifierElement.interfaces.any((it) => it.name == 'Built');
+
+//    classifierElement.accessors.where((p) => p.displayName =='isAbstract')
+//    resolvingClassifier.isAbstract = classifierElement.isAbstract;
   }
 
   void processGraph(_ResolvingClassifierHolder lookup(DartType cls)) {
@@ -320,6 +324,7 @@ class _ResolvingValueClassHelper
   void _processSuperTypes(_ResolvingClassifierHolder lookup(DartType cls)) {
     print('_processSuperTypes($name)');
     final superTypes = classifierElement.interfaces;
+    print('superTypes: $superTypes');
 
     superTypes.forEach((t) {
       final superClass = lookup(t as DartType)?.resolvingClassifier;
