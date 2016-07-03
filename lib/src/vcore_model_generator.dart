@@ -1,35 +1,34 @@
 library vcore_model_generator;
 
 import 'dart:async';
-import 'dart:io';
+import 'dart:convert';
 
-import 'package:analyzer/src/generated/element.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:build/build.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:vcore_generator/src/dart_source_to_vcore.dart';
-import 'package:vcore_generator/vcore_generator.dart';
-import 'package:vcore/vcore.dart';
-import 'dart:convert';
 import 'package:vcore_generator/src/vcore_model_as_code_serialiser.dart';
+import 'package:analyzer/dart/element/visitor.dart';
 
 /// Generator for VCore Models.
 ///
 class VCoreModelGenerator extends Generator {
-  Future<String> generate(Element element) async {
+  Future<String> generate(Element element, BuildStep buildStep) async {
     if (element is! LibraryElement) return null;
 
-    final lelement = element as LibraryElement;
+    final lElement = element as LibraryElement;
 
-    print('** Library: ${lelement.name}');
-    print('defining compunit: ${lelement.definingCompilationUnit.name}');
+    print('** Library: ${lElement.name}');
+    print('defining compunit: ${lElement.definingCompilationUnit.name}');
     print(
-        'defining compunit imports: ${lelement.definingCompilationUnit.library.imports}');
+        'defining compunit imports: ${lElement.definingCompilationUnit.library.imports}');
     print(
-        'defining compunit prefixes: ${lelement.definingCompilationUnit.library.imports.where((ie) => ie.prefix != null).map((ie) => ie.importedLibrary)}');
+        'defining compunit prefixes: ${lElement.definingCompilationUnit.library.imports.where((ie) => ie.prefix != null).map((ie) => ie.importedLibrary)}');
 //    print('importedLibraries: ${lelement.importedLibraries.toList()}');
 //    print('imports: ${lelement.imports.toList()}');
 //    print(lelement.unit.element.accessors.map((p) => p.name).toList());
 
-    final sourceLibraries = lelement.definingCompilationUnit.library.imports
+    final sourceLibraries = lElement.definingCompilationUnit.library.imports
             .where((ie) => ie.prefix?.name?.startsWith('source_package'))
             .map((ie) => ie.importedLibrary)
 //            .where((pe) => pe.name.startsWith('source_package'))
@@ -40,11 +39,11 @@ class VCoreModelGenerator extends Generator {
 
     if (sourceLibraries.isEmpty) {
       print('no libraries imported with prefix starting with source_package '
-          'for library ${lelement.name}');
+          'for library ${lElement.name}');
       return null;
     }
 
-    final vcoreImports = lelement.definingCompilationUnit.library.imports
+    final vcoreImports = lElement.definingCompilationUnit.library.imports
         .where((ie) => ie.importedLibrary.name == 'vcore');
 
     final prefixedVcoreImport = vcoreImports.where((ie) => ie.prefix != null);
@@ -55,7 +54,7 @@ class VCoreModelGenerator extends Generator {
     print('*** vcorePrefix: $vcorePrefix');
 
     // TODO(moi): better way of checking for top level declaration.
-    if (!lelement.unit.element.accessors
+    if (!lElement.unit.element.accessors
         .any((element) => element.displayName == 'vCoreModelPackage'))
       return null;
 
@@ -97,24 +96,24 @@ class VCoreModelGenerator extends Generator {
   }
 }
 
-class _GetClassesVisitor extends RecursiveElementVisitor {
-  final List<ClassElement> classElements = new List<ClassElement>();
-
-  @override
-  visitClassElement(ClassElement element) {
-    print('visitClassElement($element)');
-    classElements.add(element);
-    super.visitClassElement(element);
-  }
-
-  visitLibraryElement(LibraryElement element) {
-    print('visitLibraryElement($element)');
-    return super.visitLibraryElement(element);
-  }
-
-  visitExportElement(ExportElement element) {
-    print('visitExportElement($element)');
-    element.exportedLibrary.visitChildren(this);
-    return super.visitExportElement(element);
-  }
-}
+//class _GetClassesVisitor extends RecursiveElementVisitor {
+//  final List<ClassElement> classElements = new List<ClassElement>();
+//
+//  @override
+//  visitClassElement(ClassElement element) {
+//    print('visitClassElement($element)');
+//    classElements.add(element);
+//    super.visitClassElement(element);
+//  }
+//
+//  visitLibraryElement(LibraryElement element) {
+//    print('visitLibraryElement($element)');
+//    return super.visitLibraryElement(element);
+//  }
+//
+//  visitExportElement(ExportElement element) {
+//    print('visitExportElement($element)');
+//    element.exportedLibrary.visitChildren(this);
+//    return super.visitExportElement(element);
+//  }
+//}
