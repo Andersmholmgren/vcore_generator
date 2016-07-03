@@ -1,6 +1,8 @@
-import 'package:analyzer/src/generated/element.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:vcore/vcore.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
+import 'package:analyzer/dart/element/visitor.dart';
 
 Package convert(LibraryElement library) {
   return new ConvertFromSourceLibrary(library).convert();
@@ -192,14 +194,14 @@ class ConvertFromSourceLibrary {
 }
 
 // OMG shit names
-abstract class _ResolvingClassifierHolder<V extends Classifier<V, B>,
-    B extends ClassifierBuilder<V, B>> {
+abstract class _ResolvingClassifierHolder<V extends TypedClassifier<V, B>,
+    B extends TypedClassifierBuilder<V, B>> {
   B get resolvingClassifier;
   void resolve();
 }
 
-abstract class _ResolvedClassifier<V extends Classifier<V, B>,
-        B extends ClassifierBuilder<V, B>>
+abstract class _ResolvedClassifier<V extends TypedClassifier<V, B>,
+        B extends TypedClassifierBuilder<V, B>>
     implements _ResolvingClassifierHolder<V, B> {
   final B resolvingClassifier;
 
@@ -228,8 +230,8 @@ class _ResolvingGenericTypeClassifier
   }
 }
 
-abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
-        B extends ClassifierBuilder<V, B>>
+abstract class _ResolvingClassifierHelper<V extends TypedClassifier<V, B>,
+        B extends TypedClassifierBuilder<V, B>>
     implements _ResolvingClassifierHolder<V, B> {
   V _resolvedClassifier;
   V get resolvedClassifier {
@@ -249,8 +251,8 @@ abstract class _ResolvingClassifierHelper<V extends Classifier<V, B>,
   void resolve() {}
 }
 
-abstract class _ResolvingTopLevelClassifierHelper<V extends Classifier<V, B>,
-        B extends ClassifierBuilder<V, B>>
+abstract class _ResolvingTopLevelClassifierHelper<
+        V extends TypedClassifier<V, B>, B extends TypedClassifierBuilder<V, B>>
     extends _ResolvingClassifierHelper<V, B> {
   final ClassElement classifierElement;
 
