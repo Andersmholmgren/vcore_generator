@@ -14,6 +14,7 @@ import 'package:analyzer/dart/element/visitor.dart';
 ///
 class VCoreModelGenerator extends Generator {
   Future<String> generate(Element element, BuildStep buildStep) async {
+    print('VCoreModelGenerator.generate: $element');
     if (element is! LibraryElement) return null;
 
     final lElement = element as LibraryElement;

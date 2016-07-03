@@ -128,7 +128,8 @@ ${vcorePackagePrefix}Package _create${capName}Package() {
   }
 
   String _builderName(Classifier type) {
-    print('_builderName(${type.runtimeType} ${type.name})');
+    print('_builderName(${type?.runtimeType} ${type?.name})');
+    if (type == null) return null;
 
     if (type is GenericType) {
       final typesString =
