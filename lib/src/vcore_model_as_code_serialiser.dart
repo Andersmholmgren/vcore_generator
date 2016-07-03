@@ -6,6 +6,7 @@ class VCoreModelAsCodeSerialiser {
   VCoreModelAsCodeSerialiser({this.vcorePackagePrefix: ''});
 
   void serialise(Package package, StringSink sink) {
+    print('VCoreModelAsCodeSerialiser.serialise(package: ${package.name}');
     final name = _uncapitalise(package.name);
     final capName = _capitalise(package.name);
     sink.writeln('''
@@ -116,6 +117,7 @@ ${vcorePackagePrefix}Package _create${capName}Package() {
     ${name}Builder.properties.add(new ${vcorePackagePrefix}PropertyBuilder()
       ..name = r'${p.name}'
       ..type = ${_builderName(p.type)}
+      ..explicitBuilderType = ${_builderName(p.explicitBuilderType)}
       ..isNullable = ${p.isNullable}
       ..derivedExpression = ${p.derivedExpression}
       ..docComment = ${p.docComment}
