@@ -31,7 +31,7 @@ class ConvertFromSourceLibrary {
     final v = new _GetClassesVisitor();
 //    sourceLib.definingCompilationUnit.visitChildren(v);
     library.visitChildren(v);
-    final classElements = v.classElements;
+    final classElements = v.nameToBuilderPair.values;
 //    final classElements = LibraryElements.getClassElements(library);
     print('classElements: $classElements');
 
@@ -255,7 +255,7 @@ abstract class _ResolvingClassifierHelper<V extends TypedClassifier<V, B>,
 abstract class _ResolvingTopLevelClassifierHelper<
         V extends TypedClassifier<V, B>, B extends TypedClassifierBuilder<V, B>>
     extends _ResolvingClassifierHelper<V, B> {
-  final ClassElement classifierElement;
+  final _ClassBuilderPair classifierElement;
 
   _ResolvingTopLevelClassifierHelper._(
       this.classifierElement, B resolvingClassifier)
@@ -264,7 +264,7 @@ abstract class _ResolvingTopLevelClassifierHelper<
   }
 
   static _ResolvingTopLevelClassifierHelper create(
-      ClassElement classifierElement) {
+      _ClassBuilderPair classifierElement) {
     return new _ResolvingValueClassHelper(classifierElement);
   }
 
@@ -279,14 +279,14 @@ class _ResolvingValueClassHelper
   SetBuilder<ValueClassBuilder> _superClasses =
       new SetBuilder<ValueClassBuilder>();
 
-  _ResolvingValueClassHelper(ClassElement classifierElement)
+  _ResolvingValueClassHelper(_ClassBuilderPair classifierElement)
       : super._(classifierElement, new ValueClassBuilder());
 
   @override
   void processFlat(_ResolvingClassifierHolder lookup(DartType cls)) {
     print('_ResolvingValueClassHelper.processFlat($name)');
     resolvingClassifier.isAbstract =
-        !classifierElement.interfaces.any((it) => it.name == 'Built');
+        !classifierElement.cls.interfaces.any((it) => it.name == 'Built');
 
 //    classifierElement.accessors.where((p) => p.displayName =='isAbstract')
 //    resolvingClassifier.isAbstract = classifierElement.isAbstract;
@@ -326,7 +326,7 @@ class _ResolvingValueClassHelper
 
   void _processSuperTypes(_ResolvingClassifierHolder lookup(DartType cls)) {
     print('_processSuperTypes($name)');
-    final superTypes = classifierElement.interfaces;
+    final superTypes = classifierElement.cls.interfaces;
     print('superTypes: $superTypes');
 
     superTypes.forEach((t) {
@@ -352,12 +352,13 @@ class _ResolvingValueClassHelper
 //    _properties.addAll(fieldProperties);
 
     final getters =
-        classifierElement.accessors.where((a) => a.isGetter && !a.isStatic);
+//        classifierElement.accessors.where((a) => a.isGetter && !a.isStatic);
+        classifierElement.propertyPairs;
 
     print('getters for $name: ${getters.toList()}');
 
     final getterProperties = getters
-        .map((sf) => _processField(lookup, sf.variable))
+        .map((sf) => _processField(lookup, sf))
         .where((pb) => pb != null);
 
     print('getterProperties for $name: ${getterProperties.toList()}');
@@ -368,9 +369,9 @@ class _ResolvingValueClassHelper
   }
 
   PropertyBuilder _processField(_ResolvingClassifierHolder lookup(DartType cls),
-      VariableElement structuralElement) {
+      _PropertyPair structuralElement) {
     print('_processField: $structuralElement');
-    final fieldType = structuralElement.type;
+    final fieldType = structuralElement.property.type;
     final classifierBuilder = lookup(fieldType)?.resolvingClassifier;
     if (classifierBuilder == null) {
       print("No type for structuralElement $structuralElement");
@@ -378,10 +379,24 @@ class _ResolvingValueClassHelper
 //      throw new StateError("No type for structuralElement $structuralElement");
     }
 
-    return new PropertyBuilder()
+    final builderType = structuralElement.builderProperty.map((p) => p.type);
+    final builderClassifierBuilder = builderType.expand((t) {
+      final b = lookup(t)?.resolvingClassifier;
+      if (b == null) {
+        print("No type for structuralElement $structuralElement");
+        return const None();
+//      throw new StateError("No type for structuralElement $structuralElement");
+      }
+      return new Some(b);
+    });
+
+    final pb = new PropertyBuilder()
       ..name = structuralElement.name
-      ..type = classifierBuilder
-      ..explicitBuilderType = classifierBuilder;
+      ..type = classifierBuilder;
+
+    if (builderClassifierBuilder is Some) {
+      pb.explicitBuilderType = builderClassifierBuilder.get();
+    }
   }
 }
 
@@ -389,14 +404,17 @@ class _PropertyPair {
   final VariableElement property;
   final Option<VariableElement> builderProperty;
 
+  String get name => property.name;
+
   _PropertyPair(this.property, this.builderProperty);
 }
 
 class _ClassBuilderPair {
   ClassElement cls;
   Option<ClassElement> builder = const None();
+  String get name => cls.name;
 
-  get getters => cls.accessors.where((a) => a.isGetter && !a.isStatic);
+//  get getters => cls.accessors.where((a) => a.isGetter && !a.isStatic);
 
   Iterable<_PropertyPair> get propertyPairs {
     final props = cls.accessors.where((a) => a.isGetter && !a.isStatic);
