@@ -50,7 +50,7 @@ class ConvertFromSourceLibrary {
     _classifierHelpers =
         new Map<String, _ResolvingClassifierHelper>.fromIterable(
             allClassElements,
-            key: (ClassElement c) => c.type.name,
+            key: (_ClassBuilderPair c) => c.cls.type.name,
             value: (c) => _ResolvingTopLevelClassifierHelper.create(c));
 
     print("classifiers: ${_classifierHelpers.keys.toSet()}");
@@ -407,6 +407,9 @@ class _PropertyPair {
   String get name => property.name;
 
   _PropertyPair(this.property, this.builderProperty);
+
+  String toString() =>
+      '_PropertyPair:$name (has builder? ${builderProperty is Some})';
 }
 
 class _ClassBuilderPair {
@@ -419,7 +422,7 @@ class _ClassBuilderPair {
   Iterable<_PropertyPair> get propertyPairs {
     final props = cls.accessors.where((a) => a.isGetter && !a.isStatic);
     return props.map((prop) {
-      final builderOpt = builder.map((ClassElement bCls) {
+      final builderOpt = builder.expand((ClassElement bCls) {
         return new Option(bCls.accessors
             .where((a) => a.isGetter && !a.isStatic)
             .firstWhere((a) => a.name == prop.name, orElse: () => null));
@@ -428,6 +431,9 @@ class _ClassBuilderPair {
           prop.variable, builderOpt.map((p) => p.variable));
     });
   }
+
+  String toString() =>
+      '_ClassBuilderPair:$name (has builder? ${builder is Some})';
 }
 
 class _GetClassesVisitor extends RecursiveElementVisitor {
