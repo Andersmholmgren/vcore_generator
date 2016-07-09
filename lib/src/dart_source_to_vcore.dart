@@ -3,6 +3,7 @@ import 'package:vcore/vcore.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/visitor.dart';
+import 'package:option/option.dart';
 
 Package convert(LibraryElement library) {
   return new ConvertFromSourceLibrary(library).convert();
@@ -379,18 +380,61 @@ class _ResolvingValueClassHelper
 
     return new PropertyBuilder()
       ..name = structuralElement.name
-      ..type = classifierBuilder;
+      ..type = classifierBuilder
+      ..explicitBuilderType = classifierBuilder;
+  }
+}
+
+class _PropertyPair {
+  final VariableElement property;
+  final Option<VariableElement> builderProperty;
+
+  _PropertyPair(this.property, this.builderProperty);
+}
+
+class _ClassBuilderPair {
+  ClassElement cls;
+  Option<ClassElement> builder = const None();
+
+  get getters => cls.accessors.where((a) => a.isGetter && !a.isStatic);
+
+  Iterable<_PropertyPair> get propertyPairs {
+    final props = cls.accessors.where((a) => a.isGetter && !a.isStatic);
+    return props.map((prop) {
+      final builderOpt = builder.map((ClassElement bCls) {
+        return new Option(bCls.accessors
+            .where((a) => a.isGetter && !a.isStatic)
+            .firstWhere((a) => a.name == prop.name, orElse: () => null));
+      });
+      return new _PropertyPair(
+          prop.variable, builderOpt.map((p) => p.variable));
+    });
   }
 }
 
 class _GetClassesVisitor extends RecursiveElementVisitor {
-  final List<ClassElement> classElements = new List<ClassElement>();
+//  final List<ClassElement> classElements = new List<ClassElement>();
+
+  final Map<String, _ClassBuilderPair> nameToBuilderPair =
+      <String, _ClassBuilderPair>{};
 
   @override
   visitClassElement(ClassElement element) {
     print('visitClassElement($element)');
-    if (!element.name.startsWith(r'_') && !element.name.contains('Builder')) {
-      classElements.add(element);
+    if (!element.name.startsWith(r'_')) {
+      if (element.name.endsWith('Builder')) {
+        final valueName = element.name.replaceFirst('Builder', '');
+        final pair = nameToBuilderPair.putIfAbsent(
+            valueName, () => new _ClassBuilderPair());
+
+        pair.builder = new Some(element);
+      } else {
+        final valueName = element.name;
+        final pair = nameToBuilderPair.putIfAbsent(
+            valueName, () => new _ClassBuilderPair());
+
+        pair.cls = element;
+      }
     }
     super.visitClassElement(element);
   }
