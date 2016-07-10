@@ -4,14 +4,15 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/visitor.dart';
 import 'package:option/option.dart';
+import 'package:vcore_generator/src/type_name.dart';
 
 Package convert(LibraryElement library) {
   return new ConvertFromSourceLibrary(library).convert();
 }
 
 class ConvertFromSourceLibrary {
-  Map<String, _ResolvingClassifierHelper> _classifierHelpers;
-  BuiltMap<String, Classifier> _coreTypes;
+  Map<TypeName, _ResolvingClassifierHelper> _classifierHelpers;
+  BuiltMap<TypeName, Classifier> _coreTypes;
 
   final LibraryElement library;
   final PackageBuilder pb = new PackageBuilder();
@@ -19,9 +20,9 @@ class ConvertFromSourceLibrary {
   ConvertFromSourceLibrary(this.library) {
     pb.name = library.name;
 
-    final builder = new MapBuilder<String, Classifier>();
+    final builder = new MapBuilder<TypeName, Classifier>();
     dartPackage.classifiers.forEach((c) {
-      builder[c.name] = c;
+      builder[new TypeName.parse(c.name)] = c;
     });
 
     _coreTypes = builder.build();
@@ -48,9 +49,10 @@ class ConvertFromSourceLibrary {
     final allClassElements = classElements;
 
     _classifierHelpers =
-        new Map<String, _ResolvingClassifierHelper>.fromIterable(
+        new Map<TypeName, _ResolvingClassifierHelper>.fromIterable(
             allClassElements,
-            key: (_ClassBuilderPair c) => c.cls.type.name,
+            key: (_ClassBuilderPair c) =>
+                new TypeName.parse(c.cls.type.displayName),
             value: (c) => _ResolvingTopLevelClassifierHelper.create(c));
 
     print("classifiers: ${_classifierHelpers.keys.toSet()}");
@@ -100,73 +102,62 @@ class ConvertFromSourceLibrary {
     print('_resolveHelper($type)');
     // TODO: less dodgy way of filtering
     if (type != null && !type.isObject) {
-      return _resolveHelperByName(type.name, type.displayName);
+      return _resolveHelperByName(type.displayName);
     } else {
       return null;
     }
   }
 
-  _ResolvingClassifierHolder _resolveHelperByName(
-      String typeName, String fullTypeName) {
-    print('_resolveHelperByName($typeName, $fullTypeName)');
+  _ResolvingClassifierHolder _resolveHelperByName(String fullTypeName) {
+    return _resolveHelperByTypeName(new TypeName.parse(fullTypeName));
+  }
+
+  _ResolvingClassifierHolder _resolveHelperByTypeName(TypeName typeName) {
+    print('_resolveHelperByTypeName($typeName)');
+
+    final baseName = typeName.baseName;
+    final baseTypeName = typeName.baseTypeName;
+
     // TODO: less dodgy way of filtering
-    if (typeName != 'Built' && !typeName.startsWith('Serializer')) {
+    if (baseName != 'Built' && !baseName.startsWith('Serializer')) {
       final _ResolvingClassifierHelper classifierHelper =
-          _classifierHelpers[fullTypeName] ?? _classifierHelpers[typeName];
+          _classifierHelpers[typeName] ?? _classifierHelpers[baseTypeName];
       if (classifierHelper == null) {
-        final coreType = _coreTypes[typeName];
+        final coreType = _coreTypes[baseTypeName];
         if (coreType != null) {
           return new _ResolvedExternalClassifier(coreType);
         } else {
-          final bool isSet = typeName == 'BuiltSet';
-          final bool isList = typeName == 'BuiltList';
-          final bool isCollection = isSet || isList;
-          final bool isMap = typeName == 'BuiltMap';
-          final bool isMultiValued = isCollection || isMap;
+          if (typeName.isMultiValued) {
+            print('found new multivalued type $typeName');
+            final typeParamHelpers =
+                typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
+//            print('*** $typeParamHelpers for $typeParamNames');
 
-          if (isMultiValued) {
-            print('found new multivalued type $fullTypeName');
-            final typeParamNames = fullTypeName
-                .substring(fullTypeName.indexOf('<') + 1,
-                    fullTypeName.lastIndexOf('>'))
-                .split(',')
-                .map((s) => s.trim());
-            final typeParamHelpers = typeParamNames.map((typeParamFullName) {
-              print('typeParamFullName: $typeParamFullName');
-
-              final i = typeParamFullName.indexOf('<');
-              final typeParamName =
-                  i < 0 ? typeParamFullName : typeParamFullName.substring(0, i);
-
-              return _resolveHelperByName(typeParamName, typeParamFullName);
-            });
-            print('*** $typeParamHelpers for $typeParamNames');
-
-            if (isCollection) {
+            if (typeName.isCollection) {
               final typeParamHelper = typeParamHelpers.first;
 
-              final typeBuilder = isSet
+              final typeBuilder = typeName.isSet
                   ? createBuiltSet(typeParamHelper.resolvingClassifier)
                   : createBuiltList(typeParamHelper.resolvingClassifier);
               final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
-              _classifierHelpers[fullTypeName] = helper;
+              _classifierHelpers[typeName] = helper;
               print('added: $fullTypeName -> $helper');
               return helper;
-            } else if (isMap) {
+            } else if (typeName.isMap) {
               final typeBuilder = createBuiltMap(
                   typeParamHelpers.first.resolvingClassifier,
                   typeParamHelpers.elementAt(1).resolvingClassifier);
               final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
-              _classifierHelpers[fullTypeName] = helper;
+              _classifierHelpers[typeName] = helper;
               print('added: $fullTypeName -> $helper');
               return helper;
             }
           } else {
 //          throw new StateError(
 //              "failed to resolve classifier helper class: $type");
-            print("failed to resolve classifier helper class: $typeName");
+            print("failed to resolve classifier helper class: $baseName");
             return new _ResolvedExternalClassifier(
-                (new ExternalClassBuilder()..name = typeName).build());
+                (new ExternalClassBuilder()..name = baseName).build());
           }
         }
       } else {
@@ -513,4 +504,3 @@ class _GetClassesVisitor extends RecursiveElementVisitor {
   }
 
  */
-

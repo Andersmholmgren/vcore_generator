@@ -2,6 +2,8 @@ class TypeName {
   final String baseName, fullTypeName;
   final Iterable<TypeName> typeParameters;
 
+  TypeName get baseTypeName => new TypeName.parse(baseName);
+
 //,  fullTypeName;
 
 //  if (typeName != 'Built' && !typeName.startsWith('Serializer')) {
