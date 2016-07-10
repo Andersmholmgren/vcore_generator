@@ -149,7 +149,10 @@ class ConvertFromSourceLibrary {
       if (baseClassifierHelper.resolvingClassifier is! GenericClassifier ||
           !baseClassifierHelper.resolvingClassifier.isGeneric) {
         throw new StateError(
-            'WTF $typeName is generic but the base classifier is not');
+            'WTF $typeName is generic but the base classifier is not - '
+            '(${baseClassifierHelper.resolvingClassifier.runtimeType}: '
+              ' name ${baseClassifierHelper.resolvingClassifier.name}; '
+              ' genricTypes ${baseClassifierHelper.resolvingClassifier.genericTypes.build()})');
       } else {
         return baseClassifierHelper.resolvingClassifier;
       }
