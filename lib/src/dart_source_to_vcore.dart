@@ -37,8 +37,7 @@ class ConvertFromSourceLibrary {
     _classifierHelpers =
         new Map<TypeName, _ResolvingClassifierHelper>.fromIterable(
             allClassElements,
-            key: (_ClassBuilderPair c) =>
-                new TypeName.parse(c.cls.type.name),
+            key: (_ClassBuilderPair c) => new TypeName.parse(c.cls.type.name),
             value: (c) => _ResolvingTopLevelClassifierHelper.create(c));
 
     print("classifiers: ${_classifierHelpers.keys.toSet()}");
@@ -93,7 +92,8 @@ class ConvertFromSourceLibrary {
     final baseTypeName = typeName.baseTypeName;
 
     // TODO: less dodgy way of filtering
-    if (baseName != 'Built' && !baseName.startsWith('Serializer')) {
+    if (baseName != 'Built' &&
+        !baseName.startsWith('Serializer')) {
       final _ResolvingClassifierHelper classifierHelper =
           _classifierHelpers[typeName] ?? _classifierHelpers[baseTypeName];
       if (classifierHelper == null) {
