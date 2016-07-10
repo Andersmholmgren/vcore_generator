@@ -92,8 +92,7 @@ class ConvertFromSourceLibrary {
     final baseTypeName = typeName.baseTypeName;
 
     // TODO: less dodgy way of filtering
-    if (baseName != 'Built' &&
-        !baseName.startsWith('Serializer')) {
+    if (baseName != 'Built' && !baseName.startsWith('Serializer')) {
       final _ResolvingClassifierHelper classifierHelper =
           _classifierHelpers[typeName] ?? _classifierHelpers[baseTypeName];
       if (classifierHelper == null) {
@@ -101,6 +100,10 @@ class ConvertFromSourceLibrary {
         if (coreType != null) {
           return new _ResolvedExternalClassifier(coreType);
         } else {
+          if (typeName.isGeneric) {
+            final typeParamHelpers =
+                typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
+          }
           if (typeName.isMultiValued) {
             print('found new multivalued type $typeName');
             final typeParamHelpers =
@@ -479,3 +482,14 @@ class _GetClassesVisitor extends RecursiveElementVisitor {
   }
 
  */
+
+GenericTypeBuilder createGenericTypeBuilder(
+    Iterable<ClassifierBuilder> parameters,
+    Iterable<TypeParameter> genericTypes,
+    TypeName typeName) {
+  return new GenericTypeBuilder()
+    ..base = builtMap
+    ..name = typeName.toString()
+    ..genericTypeValues.addAll(
+        new Map.fromIterables(genericTypes, parameters.map((p) => p.build())));
+}
