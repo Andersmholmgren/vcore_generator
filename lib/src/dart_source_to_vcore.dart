@@ -1,10 +1,9 @@
-import 'package:built_collection/built_collection.dart';
-import 'package:vcore/vcore.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/visitor.dart';
+import 'package:built_collection/built_collection.dart';
 import 'package:option/option.dart';
-import 'package:vcore_generator/src/type_name.dart';
+import 'package:vcore/vcore.dart';
 
 Package convert(LibraryElement library) {
   return new ConvertFromSourceLibrary(library).convert();
