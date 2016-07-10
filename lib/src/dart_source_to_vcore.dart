@@ -29,21 +29,8 @@ class ConvertFromSourceLibrary {
 
   Package convert() {
     final v = new _GetClassesVisitor();
-//    sourceLib.definingCompilationUnit.visitChildren(v);
     library.visitChildren(v);
     final classElements = v.nameToBuilderPair.values;
-//    final classElements = LibraryElements.getClassElements(library);
-//    print('classElements: $classElements');
-
-//    final transitiveClassElements =
-//        LibraryElements.getTransitiveClassElements(library);
-//
-//    print('transitiveClassElements: $transitiveClassElements');
-//    final allClassElements = concat([classElements, transitiveClassElements])
-//        .where((ClassElement c) {
-////      print(c.name);
-//      return !c.name.startsWith(r'_$') && !c.name.contains('Builder');
-//    });
 
     final allClassElements = classElements;
 
@@ -58,9 +45,6 @@ class ConvertFromSourceLibrary {
     _classifierHelpers.forEach((t, h) {
       print('$t -> ${h.resolvingClassifier.runtimeType}');
     });
-
-//    final classifiers =
-//        eClassifiers.map(_processClassifier).where((c) => c != null).toList();
 
     _classifierHelpers.values.forEach((h) => h.processFlat(_resolveHelper));
     // TODO: hack .toList() as we are modifying the map!!
@@ -77,15 +61,6 @@ class ConvertFromSourceLibrary {
     final package = new Package((b) => b
       ..name = library.name
       ..classifiers.addAll(classifiers));
-
-//    new VCoreCodeGenerator().generatePackage(package, stdout);
-
-//    final boolean = _classifierHelpers['EBoolean'];
-//
-//    print('-------');
-//
-//    print('${classifiers.map((c) => c.name).toSet()}');
-//    print(boolean.resolvedClassifier);
 
     return package;
   }
