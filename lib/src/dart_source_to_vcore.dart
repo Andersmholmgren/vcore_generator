@@ -94,9 +94,47 @@ class ConvertFromSourceLibrary {
     // TODO: less dodgy way of filtering
     if (baseName != 'Built' && !baseName.startsWith('Serializer')) {
       final _ResolvingClassifierHelper classifierHelper =
-          _classifierHelpers[typeName] ?? _classifierHelpers[baseTypeName];
+          _classifierHelpers[typeName];
+
+      if (classifierHelper != null) return classifierHelper;
+
+      final _ResolvingClassifierHelper baseClassifierHelper =
+          _classifierHelpers[baseTypeName];
+
+      if (baseClassifierHelper != null) {
+        if (!typeName.isGeneric) {
+          throw new StateError(
+              'WTF $typeName is NOT generic but only have classifier registered on basename');
+        } else if (baseClassifierHelper.resolvingClassifier
+            is! GenericClassifier ||
+            !baseClassifierHelper.resolvingClassifier.isGeneric) {
+          throw new StateError(
+              'WTF $typeName is generic but the base classifier is not');
+        } else {
+          final typeParamHelpers =
+              typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
+          final typeParamClassifierBuilders =
+              typeParamHelpers.map((t) => t.resolvingClassifier);
+
+          final typeBuilder = _createGenericTypeBuilder(
+              typeParamClassifierBuilders,
+              baseClassifierHelper.resolvingClassifier.typeParameters,
+              typeName);
+          final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
+          _classifierHelpers[typeName] = helper;
+          print('added: $typeName -> $helper');
+          return helper;
+        }
+      } else {}
+//  && typeName.isGeneric)
+
+//  ?? _classifierHelpers[baseTypeName];
       if (classifierHelper == null) {
         final coreType = _coreTypes[baseTypeName];
+        print('AAAAA: coreType: $coreType');
+
+//        TODO: we never added the built collections to core types. Why!!!
+
         if (coreType != null) {
           return new _ResolvedExternalClassifier(coreType);
         } else {
@@ -483,7 +521,7 @@ class _GetClassesVisitor extends RecursiveElementVisitor {
 
  */
 
-GenericTypeBuilder createGenericTypeBuilder(
+GenericTypeBuilder _createGenericTypeBuilder(
     Iterable<ClassifierBuilder> parameters,
     Iterable<TypeParameter> genericTypes,
     TypeName typeName) {
