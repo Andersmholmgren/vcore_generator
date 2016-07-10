@@ -51,7 +51,7 @@ class ConvertFromSourceLibrary {
         new Map<TypeName, _ResolvingClassifierHelper>.fromIterable(
             allClassElements,
             key: (_ClassBuilderPair c) =>
-                new TypeName.parse(c.cls.type.displayName),
+                new TypeName.parse(c.cls.type.name),
             value: (c) => _ResolvingTopLevelClassifierHelper.create(c));
 
     print("classifiers: ${_classifierHelpers.keys.toSet()}");
