@@ -4,6 +4,7 @@ import 'package:analyzer/dart/element/visitor.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:option/option.dart';
 import 'package:vcore/vcore.dart';
+import 'package:built_value/built_value.dart';
 
 Package convert(LibraryElement library) {
   return new ConvertFromSourceLibrary(library).convert();
@@ -112,7 +113,12 @@ class ConvertFromSourceLibrary {
       if (resolvedHelper != null) return resolvedHelper;
 
       if (typeName.isGeneric) {
-        final baseClassifier = _getOrCreateGenericBaseClassifier(typeName);
+        final baseClassifierHelper =
+            _getOrCreateGenericBaseClassifier(typeName);
+        final baseClassifier = baseClassifierHelper.resolvingClassifier;
+        if (!baseClassifier.isGeneric) {
+          return baseClassifierHelper;
+        }
         final typeParamHelpers =
             typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
         final typeParamClassifierBuilders =
@@ -140,7 +146,7 @@ class ConvertFromSourceLibrary {
     }
   }
 
-  GenericClassifierBuilder _getOrCreateGenericBaseClassifier(
+  _ResolvingClassifierHolder _getOrCreateGenericBaseClassifier(
       TypeName typeName) {
     final _ResolvingClassifierHelper baseClassifierHelper =
         _classifierHelpers[typeName.baseTypeName];
@@ -148,18 +154,25 @@ class ConvertFromSourceLibrary {
     if (baseClassifierHelper != null) {
       if (baseClassifierHelper.resolvingClassifier is! GenericClassifier ||
           !baseClassifierHelper.resolvingClassifier.isGeneric) {
-        throw new StateError(
-            'WTF $typeName is generic but the base classifier is not - '
+        print('WTF $typeName is generic but the base classifier is not - '
             '(${baseClassifierHelper.resolvingClassifier.runtimeType}: '
-              ' name ${baseClassifierHelper.resolvingClassifier.name}; '
-              ' genricTypes ${baseClassifierHelper.resolvingClassifier.genericTypes.build()})');
+            ' name ${baseClassifierHelper.resolvingClassifier.name}; '
+            ' genricTypes ${baseClassifierHelper.resolvingClassifier.genericTypes.build()})');
+        return baseClassifierHelper;
       } else {
-        return baseClassifierHelper.resolvingClassifier;
+        return baseClassifierHelper;
       }
     } else {
       print('*** WARNING: creating generic type (why is not not registered) '
           'for ${typeName.baseTypeName}');
-      throw new StateError('not implemented yet');
+
+      final resolved = _resolvedHelpers[typeName.baseTypeName];
+      print('resolved helper: $resolved');
+
+//      throw new StateError('not implemented yet');
+
+      return resolved;
+
 //      final b = new ExternalClassBuilder()..name = typeName.baseName;
 //      typeName.typeParameters.map((tn) => new TypeParameterBuilder()..)
     }
@@ -509,6 +522,6 @@ GenericTypeBuilder _createGenericTypeBuilder(
   return new GenericTypeBuilder()
     ..base = builtMap
     ..name = typeName.toString()
-    ..genericTypeValues.addAll(
-        new Map.fromIterables(genericTypes, parameters.map((p) => p.build())));
+    ..genericTypeValues.addAll(new Map.fromIterables(
+        genericTypes, parameters.map((p) => p is Builder ? p.build() : p)));
 }
