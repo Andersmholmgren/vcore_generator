@@ -50,6 +50,11 @@ class TypeName {
 
   String toString() => fullTypeName;
 
+  bool operator ==(other) =>
+      other is TypeName && other.fullTypeName == fullTypeName;
+
+  int get hashCode => fullTypeName.hashCode;
+
 //  Iterable<String>
 
 //        if (isMultiValued) {
