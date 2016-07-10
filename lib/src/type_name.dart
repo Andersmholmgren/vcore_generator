@@ -1,5 +1,5 @@
 class TypeName {
-  final String baseName;
+  final String baseName, fullTypeName;
   final Iterable<TypeName> typeParameters;
 
 //,  fullTypeName;
@@ -18,7 +18,14 @@ class TypeName {
   bool get isMap => baseName == 'BuiltMap';
   bool get isMultiValued => isCollection || isMap;
 
-  TypeName(this.baseName, {this.typeParameters: const []});
+  TypeName._(this.baseName, this.typeParameters, this.fullTypeName);
+  TypeName(String baseName, {Iterable<TypeName> typeParameters: const []})
+      : this._(
+            baseName,
+            typeParameters,
+            "$baseName${typeParameters.isEmpty
+  ? ''
+    : '<${typeParameters.map((t) => t.toString()).join(', ')}>'}");
 
   factory TypeName.parse(String fullTypeName) {
     final startIndex = fullTypeName.indexOf('<');
@@ -35,15 +42,13 @@ class TypeName {
         .map((s) => s.trim());
     final typeParameters = typeParamNames.map((p) => new TypeName.parse(p));
 
-    return new TypeName(baseName, typeParameters: typeParameters);
+    final typeName = new TypeName(baseName, typeParameters: typeParameters);
+    assert(typeName.fullTypeName ==
+        fullTypeName); // actually could have whitespace diffs
+    return typeName;
   }
 
-  String toString() {
-    final paramString = typeParameters.isEmpty
-        ? ''
-        : '<${typeParameters.map((t) => t.toString()).join(', ')}>';
-    return '$baseName$paramString';
-  }
+  String toString() => fullTypeName;
 
 //  Iterable<String>
 
