@@ -92,7 +92,7 @@ class VCoreModelGenerator extends Generator {
     final sb = new StringBuffer();
     new VCoreModelAsCodeSerialiser(vcorePackagePrefix: vcorePrefix)
         .serialise(package, sb);
-    print(sb.toString());
+//    print(sb.toString());
     return sb.toString();
   }
 }

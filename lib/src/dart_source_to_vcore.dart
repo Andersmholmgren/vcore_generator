@@ -33,7 +33,7 @@ class ConvertFromSourceLibrary {
     library.visitChildren(v);
     final classElements = v.nameToBuilderPair.values;
 //    final classElements = LibraryElements.getClassElements(library);
-    print('classElements: $classElements');
+//    print('classElements: $classElements');
 
 //    final transitiveClassElements =
 //        LibraryElements.getTransitiveClassElements(library);
@@ -140,7 +140,7 @@ class ConvertFromSourceLibrary {
                   : createBuiltList(typeParamHelper.resolvingClassifier);
               final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
               _classifierHelpers[typeName] = helper;
-              print('added: $fullTypeName -> $helper');
+              print('added: $typeName -> $helper');
               return helper;
             } else if (typeName.isMap) {
               final typeBuilder = createBuiltMap(
@@ -148,7 +148,7 @@ class ConvertFromSourceLibrary {
                   typeParamHelpers.elementAt(1).resolvingClassifier);
               final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
               _classifierHelpers[typeName] = helper;
-              print('added: $fullTypeName -> $helper');
+              print('added: $typeName -> $helper');
               return helper;
             }
           } else {
@@ -158,6 +158,7 @@ class ConvertFromSourceLibrary {
             return new _ResolvedExternalClassifier(
                 (new ExternalClassBuilder()..name = baseName).build());
           }
+          return null;
         }
       } else {
         return classifierHelper;
