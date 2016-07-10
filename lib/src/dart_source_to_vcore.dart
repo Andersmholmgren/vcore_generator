@@ -11,6 +11,7 @@ Package convert(LibraryElement library) {
 
 class ConvertFromSourceLibrary {
   Map<TypeName, _ResolvingClassifierHelper> _classifierHelpers;
+  Map<TypeName, _ResolvedExternalClassifier> _resolvedHelpers;
   BuiltMap<TypeName, Classifier> _coreTypes;
 
   final LibraryElement library;
@@ -20,9 +21,12 @@ class ConvertFromSourceLibrary {
     pb.name = library.name;
 
     final builder = new MapBuilder<TypeName, Classifier>();
-    dartPackage.classifiers.forEach((c) {
+
+    add(c) {
       builder[new TypeName.parse(c.name)] = c;
-    });
+    }
+    dartPackage.classifiers.forEach(add);
+    builtPackage.classifiers.forEach(add);
 
     _coreTypes = builder.build();
   }
@@ -39,6 +43,11 @@ class ConvertFromSourceLibrary {
             allClassElements,
             key: (_ClassBuilderPair c) => new TypeName.parse(c.cls.type.name),
             value: (c) => _ResolvingTopLevelClassifierHelper.create(c));
+
+    _resolvedHelpers = {};
+    _coreTypes.forEach((tn, c) {
+      _resolvedHelpers[tn] = new _ResolvedExternalClassifier(c);
+    });
 
     print("classifiers: ${_classifierHelpers.keys.toSet()}");
     _classifierHelpers.forEach((t, h) {
@@ -89,7 +98,6 @@ class ConvertFromSourceLibrary {
     print('_resolveHelperByTypeName($typeName)');
 
     final baseName = typeName.baseName;
-    final baseTypeName = typeName.baseTypeName;
 
     // TODO: less dodgy way of filtering
     if (baseName != 'Built' && !baseName.startsWith('Serializer')) {
@@ -98,89 +106,59 @@ class ConvertFromSourceLibrary {
 
       if (classifierHelper != null) return classifierHelper;
 
-      final _ResolvingClassifierHelper baseClassifierHelper =
-          _classifierHelpers[baseTypeName];
+      final _ResolvingClassifierHolder resolvedHelper =
+          _resolvedHelpers[typeName];
 
-      if (baseClassifierHelper != null) {
-        if (!typeName.isGeneric) {
+      if (resolvedHelper != null) return resolvedHelper;
+
+      if (typeName.isGeneric) {
+        final baseClassifier = _getOrCreateGenericBaseClassifier(typeName);
+        final typeParamHelpers =
+            typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
+        final typeParamClassifierBuilders =
+            typeParamHelpers.map((t) => t.resolvingClassifier);
+
+        final typeBuilder = _createGenericTypeBuilder(
+            typeParamClassifierBuilders,
+            baseClassifier.genericTypes.build().map((b) => b.build()),
+            typeName);
+        final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
+        _classifierHelpers[typeName] = helper;
+        print('added: $typeName -> $helper');
+        return helper;
+      } else {
+        final _ResolvingClassifierHelper baseClassifierHelper =
+            _classifierHelpers[typeName.baseTypeName];
+        if (baseClassifierHelper != null) {
           throw new StateError(
               'WTF $typeName is NOT generic but only have classifier registered on basename');
-        } else if (baseClassifierHelper.resolvingClassifier
-            is! GenericClassifier ||
-            !baseClassifierHelper.resolvingClassifier.isGeneric) {
-          throw new StateError(
-              'WTF $typeName is generic but the base classifier is not');
-        } else {
-          final typeParamHelpers =
-              typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
-          final typeParamClassifierBuilders =
-              typeParamHelpers.map((t) => t.resolvingClassifier);
-
-          final typeBuilder = _createGenericTypeBuilder(
-              typeParamClassifierBuilders,
-              baseClassifierHelper.resolvingClassifier.typeParameters,
-              typeName);
-          final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
-          _classifierHelpers[typeName] = helper;
-          print('added: $typeName -> $helper');
-          return helper;
-        }
-      } else {}
-//  && typeName.isGeneric)
-
-//  ?? _classifierHelpers[baseTypeName];
-      if (classifierHelper == null) {
-        final coreType = _coreTypes[baseTypeName];
-        print('AAAAA: coreType: $coreType');
-
-//        TODO: we never added the built collections to core types. Why!!!
-
-        if (coreType != null) {
-          return new _ResolvedExternalClassifier(coreType);
-        } else {
-          if (typeName.isGeneric) {
-            final typeParamHelpers =
-                typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
-          }
-          if (typeName.isMultiValued) {
-            print('found new multivalued type $typeName');
-            final typeParamHelpers =
-                typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
-//            print('*** $typeParamHelpers for $typeParamNames');
-
-            if (typeName.isCollection) {
-              final typeParamHelper = typeParamHelpers.first;
-
-              final typeBuilder = typeName.isSet
-                  ? createBuiltSet(typeParamHelper.resolvingClassifier)
-                  : createBuiltList(typeParamHelper.resolvingClassifier);
-              final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
-              _classifierHelpers[typeName] = helper;
-              print('added: $typeName -> $helper');
-              return helper;
-            } else if (typeName.isMap) {
-              final typeBuilder = createBuiltMap(
-                  typeParamHelpers.first.resolvingClassifier,
-                  typeParamHelpers.elementAt(1).resolvingClassifier);
-              final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
-              _classifierHelpers[typeName] = helper;
-              print('added: $typeName -> $helper');
-              return helper;
-            }
-          } else {
-//          throw new StateError(
-//              "failed to resolve classifier helper class: $type");
-            print("failed to resolve classifier helper class: $baseName");
-            return new _ResolvedExternalClassifier(
-                (new ExternalClassBuilder()..name = baseName).build());
-          }
+        } else
           return null;
-        }
-      } else {
-        return classifierHelper;
       }
     } else {
       return null;
+    }
+  }
+
+  GenericClassifierBuilder _getOrCreateGenericBaseClassifier(
+      TypeName typeName) {
+    final _ResolvingClassifierHelper baseClassifierHelper =
+        _classifierHelpers[typeName.baseTypeName];
+
+    if (baseClassifierHelper != null) {
+      if (baseClassifierHelper.resolvingClassifier is! GenericClassifier ||
+          !baseClassifierHelper.resolvingClassifier.isGeneric) {
+        throw new StateError(
+            'WTF $typeName is generic but the base classifier is not');
+      } else {
+        return baseClassifierHelper.resolvingClassifier;
+      }
+    } else {
+      print('*** WARNING: creating generic type (why is not not registered) '
+          'for ${typeName.baseTypeName}');
+      throw new StateError('not implemented yet');
+//      final b = new ExternalClassBuilder()..name = typeName.baseName;
+//      typeName.typeParameters.map((tn) => new TypeParameterBuilder()..)
     }
   }
 
