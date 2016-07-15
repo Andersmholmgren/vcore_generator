@@ -119,6 +119,8 @@ class ConvertFromSourceLibrary {
         if (!baseClassifier.isGeneric) {
           return baseClassifierHelper;
         }
+        final genericClassifierBuilder =
+            baseClassifier as GenericClassifierBuilder;
         final typeParamHelpers =
             typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
         final typeParamClassifierBuilders =
@@ -126,7 +128,7 @@ class ConvertFromSourceLibrary {
 
         final typeBuilder = _createGenericTypeBuilder(
             typeParamClassifierBuilders,
-            baseClassifier.genericTypes.build().map((b) => b.build()),
+            genericClassifierBuilder.genericTypes.build().map((b) => b.build()),
             typeName);
         final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
         _classifierHelpers[typeName] = helper;
