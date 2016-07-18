@@ -97,6 +97,7 @@ class ConvertFromSourceLibrary {
 
   _ResolvingClassifierHolder _resolveHelperByTypeName(TypeName typeName) {
     print('_resolveHelperByTypeName($typeName)');
+    print('PPPPPPPPPPPPPPP');
 
     final baseName = typeName.baseName;
 
@@ -116,18 +117,40 @@ class ConvertFromSourceLibrary {
         final baseClassifierHelper =
             _getOrCreateGenericBaseClassifier(typeName);
         final baseClassifier = baseClassifierHelper.resolvingClassifier;
-        if (!baseClassifier.isGeneric) {
+        print('UUUUUUU1: ${baseClassifier.runtimeType}');
+        if (!baseClassifier.build().isGeneric) {
           return baseClassifierHelper;
         }
         final genericClassifierBuilder =
             baseClassifier as GenericClassifierBuilder;
-        final typeParamHelpers =
-            typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
-        final typeParamClassifierBuilders =
-            typeParamHelpers.map((t) => t.resolvingClassifier);
+        print(
+            'UUUUUUU - genericClassifierBuilder: name ${genericClassifierBuilder.name} '
+            ': type ${genericClassifierBuilder.runtimeType}: typeName: $typeName: '
+            'type params ${typeName.typeParameters}');
+//        final typeParamHelpers =
+//            typeName.typeParameters.map((p) => _resolveHelperByTypeName(p));
+
+        final typeParamClassifierBuilders = typeName.typeParameters.map((p) {
+          _ResolvingClassifierHolder resolveToggled() {
+            final toggled = BuiltBuilderNamingPattern.toggleName(p);
+            print('attempting to resolve $p as toggled name $toggled');
+
+            ////// BUT we can't use the toggled value. Need to
+            return _resolveHelperByTypeName(toggled);
+          }
+          final t = _resolveHelperByTypeName(p) ?? resolveToggled();
+          final c = t?.resolvingClassifier;
+          if (c == null) {
+            throw new StateError('no classifier for type $t of param $p');
+          }
+          return c;
+        });
+
+        print('${typeParamClassifierBuilders.toList()}');
 
         final typeBuilder = _createGenericTypeBuilder(
             typeParamClassifierBuilders,
+//        typeName.typeParameters,
             genericClassifierBuilder.genericTypes.build().map((b) => b.build()),
             typeName);
         final helper = new _ResolvingGenericTypeClassifier(typeBuilder);
@@ -165,7 +188,7 @@ class ConvertFromSourceLibrary {
         return baseClassifierHelper;
       }
     } else {
-      print('*** WARNING: creating generic type (why is not not registered) '
+      print('*** WARNING: creating generic type (why is not registered) '
           'for ${typeName.baseTypeName}');
 
       final resolved = _resolvedHelpers[typeName.baseTypeName];
@@ -201,12 +224,16 @@ class ConvertFromSourceLibrary {
 abstract class _ResolvingClassifierHolder<V extends TypedClassifier<V, B>,
     B extends TypedClassifierBuilder<V, B>> {
   B get resolvingClassifier;
+  String get name => resolvingClassifier?.name;
+
   void resolve();
+
+  String toString() => '$runtimeType for $name';
 }
 
 abstract class _ResolvedClassifier<V extends TypedClassifier<V, B>,
         B extends TypedClassifierBuilder<V, B>>
-    implements _ResolvingClassifierHolder<V, B> {
+    extends _ResolvingClassifierHolder<V, B> {
   final B resolvingClassifier;
 
   _ResolvedClassifier(V cls) : this.resolvingClassifier = cls.toBuilder();
@@ -236,7 +263,7 @@ class _ResolvingGenericTypeClassifier
 
 abstract class _ResolvingClassifierHelper<V extends TypedClassifier<V, B>,
         B extends TypedClassifierBuilder<V, B>>
-    implements _ResolvingClassifierHolder<V, B> {
+    extends _ResolvingClassifierHolder<V, B> {
   V _resolvedClassifier;
   V get resolvedClassifier {
     return _resolvedClassifier ??= resolvingClassifier.build();
@@ -245,8 +272,6 @@ abstract class _ResolvingClassifierHelper<V extends TypedClassifier<V, B>,
   bool get isResolved => _resolvedClassifier != null;
 
   final B resolvingClassifier;
-
-  String get name => resolvingClassifier.name;
 
   _ResolvingClassifierHelper._(this.resolvingClassifier);
 
@@ -383,11 +408,20 @@ class _ResolvingValueClassHelper
     }
 
     final builderType = propertyPair.builderProperty.map((p) => p.type);
+
+    /**
+     * TODO: unfortunately when processing the builder we may have stuff like
+     * SetBuilder<TypeParameterBuilder> but we never registered helpers
+     * for the builders like TypeParameterBuilder.
+     * Maybe we need the helper to hold onto both bv and builder
+     * But the model doesn't explicitly model Builders!!
+     */
+
     final builderClassifierBuilder = builderType.expand((t) {
-      print('XXXXXXXXXXX: $t');
+      print('XXXXXXXXXXX: resolving property builder type: $t');
       final b = lookup(t)?.resolvingClassifier;
       if (b == null) {
-        print("No type for structuralElement $propertyPair");
+        print("No type for structuralElement ${propertyPair.builderProperty}");
         return const None();
 //      throw new StateError("No type for structuralElement $structuralElement");
       }
